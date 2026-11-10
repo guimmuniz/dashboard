@@ -7,6 +7,7 @@
 //   confirmar({ titulo, texto, acao })         Promise<boolean> com modal de confirmação
 //   desenharGrafico(semanas)                   redesenha o gráfico do dashboard
 //   mostrarMsg(el, texto, tipo)                mensagem dentro de um formulário
+//   Contadores (#qtd-transacoes, #qtd-saidas, #qtd-entradas) se atualizam sozinhos.
 // ==========================================================
 
 // Caminho da API a partir deste arquivo (frontend/front-end/js/app.js -> dashboard/api/).
@@ -228,6 +229,25 @@ document.addEventListener('click', async e => {
     notificar({ titulo: ehCategoria ? 'Categoria excluída' : 'Transação excluída', descricao: nome });
   }
 });
+
+// ---------- contadores das listas ----------
+// Contam sozinhos as linhas [data-id] de cada lista: quem preenche ou apaga linhas
+// não precisa atualizar o número.
+function ligarContador(idContador, idLista, texto) {
+  const contador = document.getElementById(idContador);
+  const lista = document.getElementById(idLista);
+  if (!contador || !lista) return;
+  const contar = () => {
+    const n = lista.hidden ? 0 : lista.querySelectorAll('[data-id]:not([hidden])').length;
+    const novo = texto(n);
+    if (contador.textContent !== novo) contador.textContent = novo;
+  };
+  contar();
+  new MutationObserver(contar).observe(lista, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+}
+ligarContador('qtd-transacoes', 'lista-transacoes', n => n === 0 ? 'Nenhuma transação' : n === 1 ? '1 transação' : n + ' transações');
+ligarContador('qtd-saidas', 'lista-saidas', String);
+ligarContador('qtd-entradas', 'lista-entradas', String);
 
 // ---------- envio dos formulários dos modais ----------
 document.querySelectorAll('dialog form').forEach(form => {

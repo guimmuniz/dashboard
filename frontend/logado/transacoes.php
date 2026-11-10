@@ -20,9 +20,9 @@
     <div>
       <a class="marca" href="dashboard.php">Nome do projeto</a>
       <nav class="menu" aria-label="Principal">
-        <a href="dashboard.php">Dashboard</a>
-        <a class="ativo" href="transacoes.php">Transações</a>
-        <a href="categorias.php">Categorias</a>
+        <a href="dashboard.php"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.75" y="2.75" width="5" height="5" rx="1.5"/><rect x="10.25" y="2.75" width="5" height="5" rx="1.5"/><rect x="2.75" y="10.25" width="5" height="5" rx="1.5"/><rect x="10.25" y="10.25" width="5" height="5" rx="1.5"/></svg>Dashboard</a>
+        <a class="ativo" href="transacoes.php" aria-current="page"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6h11l-3-3M14.5 12h-11l3 3"/></svg>Transações</a>
+        <a href="categorias.php"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 2.75H4.25a1.5 1.5 0 0 0-1.5 1.5V9.6a1.5 1.5 0 0 0 .44 1.06l4.9 4.9a1.5 1.5 0 0 0 2.12 0l5.35-5.35a1.5 1.5 0 0 0 0-2.12l-4.9-4.9A1.5 1.5 0 0 0 9.6 2.75Z"/><circle cx="6.25" cy="6.25" r="1" fill="currentColor" stroke="none"/></svg>Categorias</a>
       </nav>
     </div>
     <!-- O avatar e a trilha leem o nome de #nome-usuario sozinhos (ver app.js) -->
@@ -71,6 +71,7 @@
         <option value="5">Transporte</option>
         <option value="6">Lazer</option>
       </select>
+      <span class="resultado rotulo" id="qtd-transacoes" aria-live="polite">8 transações</span>
     </div>
 
     <div class="totais">
@@ -84,7 +85,9 @@
     </div>
 
     <!-- Linhas geradas pelo JS a partir do JSON. Mantenha essa estrutura (o CSS depende dela).
-         Entrada -> classe "entrada" e "+"; saída -> classe "saida" e "−". -->
+         Entrada -> classe "entrada" e "+"; saída -> classe "saida" e "−".
+         A contagem em #qtd-transacoes é feita pelo app.js; não precisa preencher.
+         Sem descrição: deixe o span .descricao vazio que aparece "Sem descrição". -->
     <div id="lista-transacoes">
       <div class="lista-linha" data-id="1">
         <span class="rotulo num">24 nov</span><span class="descricao">Show no fim de semana</span><span class="cat mudo">Lazer</span>

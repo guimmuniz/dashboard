@@ -7,6 +7,9 @@
    - BoardUI (boardui.com): botão, botão de fechar, checkbox,
      avatar, trilha (breadcrumb), medidor (meter), notificação
    - Cult UI (cult-ui.com): gráfico de linhas "analytics chart"
+   Inspirados nos modelos de dashboard do BoardUI (sem copiar): menu com
+   ícones, faixa de resumo com ícones, selos (.selo), etiquetas na lista
+   de transações e a lista com barras de "Gastos por categoria".
    Títulos em Clash Display (fontshare.com), texto em Inter.
    ========================================================== */
 
@@ -34,6 +37,7 @@
   --fundo: #FAFAFA;
   --fundo-hover: #F2F2F4;
   --fundo-ativo: #E9E9EC;
+  --faixa: var(--fundo-hover); /* superfície suave: faixa do resumo e cabeçalho da lista */
   --branco: #FFFFFF;
 
   /* estados */
@@ -268,6 +272,28 @@ button { font-family: inherit; cursor: pointer; }
 .avatar-pp { width: 20px; height: 20px; font-size: 10px; line-height: 15px; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
+/* ---------- selo (pílula de informação) ----------
+   <span class="selo">61% das saídas</span>
+   Some sozinho quando está vazio (sem espaço nem quebra de linha dentro). */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--fundo-ativo);
+  color: var(--texto-2);
+  font-family: var(--fonte);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0;
+  word-spacing: normal;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.selo:empty { display: none; }
+
 /* ---------- trilha (BoardUI Breadcrumb) ---------- */
 .trilha { display: flex; overflow-x: auto; scrollbar-width: none; margin-bottom: 20px; }
 .trilha::-webkit-scrollbar { display: none; }
@@ -405,17 +431,22 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .lateral .marca { margin-bottom: 44px; display: block; text-decoration: none; }
 
 .menu a {
-  display: block;
-  padding: 7px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 9px;
   margin: 0 -10px 2px;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   font-size: 14px;
   color: var(--texto-3);
   text-decoration: none;
-  transition: background-color .15s ease, color .15s ease;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
+.menu-ico { width: 18px; height: 18px; flex-shrink: 0; }
 .menu a:hover { background: var(--fundo-hover); color: var(--texto); }
-.menu a.ativo { background: var(--fundo-hover); color: var(--texto); font-weight: 500; }
+.menu a.ativo { background: var(--branco); border-color: var(--borda); box-shadow: var(--sombra-xs); color: var(--texto); font-weight: 500; }
+.menu a.ativo .menu-ico { color: var(--acento-600); }
 
 .usuario { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 13px; color: var(--texto-3); }
 .usuario-texto { min-width: 0; }
@@ -431,11 +462,11 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .seletor-mes { display: flex; align-items: center; gap: 12px; }
 .seletor-mes span { font-size: 14px; font-weight: 500; min-width: 96px; text-align: center; }
 
-.secao { margin-top: 88px; }
+.secao { margin-top: 64px; }
 .secao-topo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
 .secao h2 { font-size: 20px; font-weight: 500; }
 
-.duas-colunas { display: grid; grid-template-columns: 1.4fr 1fr; gap: 88px; }
+.duas-colunas { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 64px; }
 
 /* ---------- dashboard ---------- */
 
@@ -444,9 +475,18 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .saldo-valor .centavos { color: #A1A1AA; }
 .saldo p { margin: 18px 0 0; font-size: 15px; color: var(--texto-2); max-width: 440px; line-height: 1.55; }
 
-.resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; margin-top: 64px; }
-.resumo > div { border-top: 1px solid var(--borda); padding-top: 16px; }
-.resumo .valor { font-family: var(--fonte-titulo); font-size: 26px; font-weight: 500; margin-top: 8px; }
+/* resumo: uma faixa suave só, com ícone + rótulo + valor em cada parte */
+.resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin: 56px -24px 0; padding: 20px 0; border-radius: 16px; background: var(--faixa); }
+.resumo > div { min-width: 0; padding: 0 24px; }
+.resumo > div + div { border-left: 1px solid var(--borda-forte); }
+.resumo .rotulo { color: var(--texto-2); }
+.resumo-icone { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin-bottom: 14px; border-radius: 8px; background: var(--branco); box-shadow: var(--sombra-xs); color: var(--texto-2); }
+.resumo-icone svg { width: 18px; height: 18px; }
+.resumo-icone.entrada { color: var(--serie-entrada); }
+.resumo-icone.saida { color: var(--serie-saida); }
+.resumo .valor { font-family: var(--fonte-titulo); font-size: clamp(20px, 2.1vw, 26px); font-weight: 500; margin-top: 8px; white-space: nowrap; }
+.resumo-linha { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; min-width: 0; }
+.resumo-linha .valor { margin-top: 0; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 
 /* ---------- gráfico (Cult UI analytics chart, em SVG + JS puro) ----------
    O JS desenha tudo dentro de #grafico: ver desenharGrafico() em app.js. */
@@ -520,6 +560,35 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .grafico-cartao .quanto { font-size: 13px; font-weight: 500; line-height: 19px; color: var(--texto-2); font-variant-numeric: tabular-nums; }
 .grafico .vazio { border-top: 0; padding: 104px 0 0; }
 
+/* ---------- gastos por categoria (ideia do Bar List Card do BoardUI) ----------
+   Cada linha tem uma barra de fundo com a parte da categoria nas saídas do mês:
+   <div class="barra-linha" style="--p: 61%"><span class="nome">…</span><span class="num">R$ …</span><span class="num parte">61%</span></div> */
+.barra-linha {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  margin-bottom: 4px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.barra-linha::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: -1;
+  width: var(--p, 0%);
+  min-width: 4px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--serie-saida) 18%, transparent);
+}
+.barra-linha .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.barra-linha .num { flex-shrink: 0; color: var(--texto-2); }
+.barra-linha .parte { width: 38px; text-align: right; color: var(--texto); font-weight: 500; }
+
 /* ---------- limites por categoria (BoardUI Meter) ----------
    .orcamento            dentro do limite (acento)
    .orcamento.atencao    80% ou mais do limite (amarelo)
@@ -547,7 +616,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 
 .lista-linha {
   display: grid;
-  grid-template-columns: 64px 1fr 140px 130px 116px;
+  grid-template-columns: 64px minmax(0, 1fr) 140px 140px 116px;
   align-items: center;
   gap: 16px;
   padding: 14px 12px;
@@ -556,17 +625,23 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
   font-size: 14px;
   transition: background-color .15s ease;
 }
-.lista-linha:hover { background: #F4F4F5; }
+.lista-linha:hover { background: var(--fundo-hover); }
 .lista-linha:last-child { border-bottom: 1px solid var(--linha); }
-.lista-linha .descricao { font-weight: 500; }
-.lista-linha .valor { text-align: right; }
-.lista-linha .valor.entrada { color: var(--acento); font-weight: 500; }
+.lista-linha .descricao { font-weight: 500; min-width: 0; }
+.lista-linha .descricao:empty::before { content: "Sem descrição"; color: var(--texto-3); font-weight: 400; }
+/* categoria como etiqueta neutra (o banco não guarda cor por categoria) */
+.lista-linha .cat { justify-self: start; max-width: 100%; padding: 2px 8px; border-radius: 6px; background: var(--fundo-ativo); color: var(--texto-2); font-size: 12px; font-weight: 500; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* valor: as duas classes têm o mesmo recuo para os dígitos alinharem; só a entrada ganha fundo */
+.lista-linha .valor { justify-self: end; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.lista-linha .valor.entrada { background: var(--acento-100); color: var(--acento-700); font-weight: 500; }
 .lista-linha .valor.saida { color: var(--texto-2); }
 .acoes { display: flex; gap: 2px; justify-content: flex-end; opacity: 0; transition: opacity .15s; }
 .lista-linha:hover .acoes, .lista-linha:focus-within .acoes { opacity: 1; }
+@media (hover: none) { .acoes { opacity: 1; } }
 
-.lista-cabecalho { display: grid; grid-template-columns: 64px 1fr 140px 130px 116px; gap: 16px; padding: 0 0 10px; }
-.lista-cabecalho span:nth-child(4) { text-align: right; }
+.lista-cabecalho { display: grid; grid-template-columns: 64px minmax(0, 1fr) 140px 140px 116px; gap: 16px; margin: 0 -12px; padding: 8px 12px; border-radius: 8px; background: var(--faixa); color: var(--texto-2); font-weight: 500; }
+.lista-cabecalho span:nth-child(4) { text-align: right; padding-right: 8px; }
+.lista-cabecalho + div > .lista-linha:first-child { border-top-color: transparent; }
 
 .vazio { padding: 48px 0; text-align: center; color: var(--texto-3); font-size: 14px; border-top: 1px solid var(--linha); }
 
@@ -578,6 +653,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .abas button { border: 0; background: none; height: 30px; padding: 0 12px; border-radius: 7px; font-size: 13px; color: var(--texto-3); transition: background-color .15s ease, color .15s ease; }
 .abas button:hover { color: var(--texto); }
 .abas button.ativo { background: var(--fundo-hover); color: var(--texto); font-weight: 500; }
+.resultado { margin-left: auto; }
 
 .totais { display: flex; gap: 40px; margin-top: 32px; padding-bottom: 24px; font-size: 14px; }
 .totais strong { display: block; font-family: var(--fonte-titulo); font-size: 20px; font-weight: 500; margin-top: 4px; white-space: nowrap; }
@@ -595,12 +671,15 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
   font-size: 14px;
   transition: background-color .15s ease;
 }
-.categoria-linha:hover { background: #F4F4F5; }
+.categoria-linha:hover { background: var(--fundo-hover); }
 .categoria-linha:last-child { border-bottom: 1px solid var(--linha); }
 .categoria-linha .nome { font-weight: 500; }
 .categoria-linha .num { text-align: right; }
 .categoria-linha:hover .acoes, .categoria-linha:focus-within .acoes { opacity: 1; }
-.contador { font-family: var(--fonte); font-size: 12px; color: var(--texto-3); font-weight: 400; margin-left: 6px; letter-spacing: 0; }
+#lista-entradas .categoria-linha { grid-template-columns: 1fr 116px; }
+.categoria-linha .num:empty::before { content: "Sem limite"; }
+.marca-cor { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; vertical-align: middle; }
+.contador { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--fundo-ativo); color: var(--texto-2); font-family: var(--fonte); font-size: 12px; font-weight: 500; line-height: 16px; letter-spacing: 0; word-spacing: normal; vertical-align: middle; font-variant-numeric: tabular-nums; }
 .cabecalho-limite { margin-right: 132px; }
 
 /* ---------- modal (<dialog>) ---------- */
@@ -710,12 +789,19 @@ dialog h2 { font-size: 20px; font-weight: 500; }
   .menu { display: flex; gap: 4px; }
   .menu a { margin: 0; }
   .conteudo { padding: 24px 20px 64px; }
-  .duas-colunas, .resumo { grid-template-columns: 1fr; gap: 40px; }
+  .duas-colunas { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .resumo { grid-template-columns: minmax(0, 1fr); margin: 40px 0 0; padding: 4px 0; }
+  .resumo > div { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: 12px; align-items: center; padding: 14px 16px; }
+  .resumo > div + div { border-left: 0; border-top: 1px solid var(--borda-forte); }
+  .resumo-icone { grid-row: 1 / span 2; margin: 0; }
+  .resumo .valor, .resumo-linha { margin-top: 2px; }
+  .resultado { margin-left: 0; }
+  .lista-linha .descricao { overflow-wrap: anywhere; }
   .secao { margin-top: 56px; }
   .saldo { margin-top: 40px; }
   .saldo-valor { font-size: 48px; }
   .topo { flex-wrap: wrap; }
-  .lista-linha, .lista-cabecalho { grid-template-columns: 56px 1fr 110px; }
+  .lista-linha, .lista-cabecalho { grid-template-columns: 56px minmax(0, 1fr) auto; }
   .lista-linha .cat, .lista-cabecalho span:nth-child(3), .lista-cabecalho span:nth-child(5) { display: none; }
   .acoes { opacity: 1; grid-column: 2 / -1; justify-content: flex-start; margin-left: -8px; }
   .cabecalho-limite { margin-right: 0; }
@@ -728,6 +814,8 @@ dialog h2 { font-size: 20px; font-weight: 500; }
   .entrada-lado { border-right: 0; border-bottom: 1px solid var(--linha); padding: 28px 24px; gap: 32px; }
   .entrada-lado h1 { font-size: 32px; }
 }
+
+@media (max-width: 520px) { .menu-ico { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }

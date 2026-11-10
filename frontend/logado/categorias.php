@@ -20,9 +20,9 @@
     <div>
       <a class="marca" href="dashboard.php">Nome do projeto</a>
       <nav class="menu" aria-label="Principal">
-        <a href="dashboard.php">Dashboard</a>
-        <a href="transacoes.php">Transações</a>
-        <a class="ativo" href="categorias.php">Categorias</a>
+        <a href="dashboard.php"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.75" y="2.75" width="5" height="5" rx="1.5"/><rect x="10.25" y="2.75" width="5" height="5" rx="1.5"/><rect x="2.75" y="10.25" width="5" height="5" rx="1.5"/><rect x="10.25" y="10.25" width="5" height="5" rx="1.5"/></svg>Dashboard</a>
+        <a href="transacoes.php"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6h11l-3-3M14.5 12h-11l3 3"/></svg>Transações</a>
+        <a class="ativo" href="categorias.php" aria-current="page"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 2.75H4.25a1.5 1.5 0 0 0-1.5 1.5V9.6a1.5 1.5 0 0 0 .44 1.06l4.9 4.9a1.5 1.5 0 0 0 2.12 0l5.35-5.35a1.5 1.5 0 0 0 0-2.12l-4.9-4.9A1.5 1.5 0 0 0 9.6 2.75Z"/><circle cx="6.25" cy="6.25" r="1" fill="currentColor" stroke="none"/></svg>Categorias</a>
       </nav>
     </div>
     <!-- O avatar e a trilha leem o nome de #nome-usuario sozinhos (ver app.js) -->
@@ -57,11 +57,13 @@
     <div class="msg" id="msg-categorias" role="status" style="margin-top:24px"></div>
 
     <!-- INTEGRAR: GET ../../api/categorias.php -> separar por tipo e preencher as duas listas -->
+    <!-- Linha de saída: .nome, .num (limite; vazio = "Sem limite"), .acoes. Linha de entrada: .nome, .acoes.
+         Os contadores #qtd-saidas e #qtd-entradas se atualizam sozinhos (app.js). -->
     <section class="secao duas-colunas" style="margin-top:48px">
 
       <div>
         <div class="secao-topo">
-          <h2>Saídas <span class="contador" id="qtd-saidas">4</span></h2>
+          <h2><i class="marca-cor cor-saida" aria-hidden="true"></i>Saídas <span class="contador" id="qtd-saidas">4</span></h2>
           <span class="rotulo cabecalho-limite">Limite mensal</span>
         </div>
         <div id="lista-saidas">
@@ -86,14 +88,14 @@
 
       <div>
         <div class="secao-topo">
-          <h2>Entradas <span class="contador" id="qtd-entradas">2</span></h2>
+          <h2><i class="marca-cor cor-entrada" aria-hidden="true"></i>Entradas <span class="contador" id="qtd-entradas">2</span></h2>
         </div>
         <div id="lista-entradas">
-          <div class="categoria-linha" data-id="1" style="grid-template-columns:1fr 116px">
+          <div class="categoria-linha" data-id="1">
             <span class="nome">Salário</span>
             <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
           </div>
-          <div class="categoria-linha" data-id="2" style="grid-template-columns:1fr 116px">
+          <div class="categoria-linha" data-id="2">
             <span class="nome">Bolsa estágio</span>
             <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
           </div>

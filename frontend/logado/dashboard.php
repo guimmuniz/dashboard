@@ -20,9 +20,9 @@
     <div>
       <a class="marca" href="dashboard.php">Nome do projeto</a>
       <nav class="menu" aria-label="Principal">
-        <a class="ativo" href="dashboard.php">Dashboard</a>
-        <a href="transacoes.php">Transações</a>
-        <a href="categorias.php">Categorias</a>
+        <a class="ativo" href="dashboard.php" aria-current="page"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.75" y="2.75" width="5" height="5" rx="1.5"/><rect x="10.25" y="2.75" width="5" height="5" rx="1.5"/><rect x="2.75" y="10.25" width="5" height="5" rx="1.5"/><rect x="10.25" y="10.25" width="5" height="5" rx="1.5"/></svg>Dashboard</a>
+        <a href="transacoes.php"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6h11l-3-3M14.5 12h-11l3 3"/></svg>Transações</a>
+        <a href="categorias.php"><svg class="menu-ico" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 2.75H4.25a1.5 1.5 0 0 0-1.5 1.5V9.6a1.5 1.5 0 0 0 .44 1.06l4.9 4.9a1.5 1.5 0 0 0 2.12 0l5.35-5.35a1.5 1.5 0 0 0 0-2.12l-4.9-4.9A1.5 1.5 0 0 0 9.6 2.75Z"/><circle cx="6.25" cy="6.25" r="1" fill="currentColor" stroke="none"/></svg>Categorias</a>
       </nav>
     </div>
     <!-- O avatar e a trilha leem o nome de #nome-usuario sozinhos (ver app.js) -->
@@ -45,6 +45,8 @@
       </ol>
     </nav>
 
+    <h1 class="so-leitor">Dashboard</h1>
+
     <div class="topo">
       <div class="seletor-mes">
         <button class="btn-mes" data-mes="-1" aria-label="Mês anterior"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M11 4.5L6.5 9l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -63,20 +65,28 @@
 
     <section class="resumo">
       <div>
+        <span class="resumo-icone entrada" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 5.5l-7 7M5.5 7v5.5H11"/></svg></span>
         <div class="rotulo">Entradas</div>
         <div class="valor num" id="total-entradas">R$ 3.350,00</div>
       </div>
       <div>
+        <span class="resumo-icone saida" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 12.5l7-7M7 5.5h5.5V11"/></svg></span>
         <div class="rotulo">Saídas</div>
         <div class="valor num" id="total-saidas">R$ 1.965,40</div>
       </div>
       <div>
+        <span class="resumo-icone" aria-hidden="true"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 2.75H4.25a1.5 1.5 0 0 0-1.5 1.5V9.6a1.5 1.5 0 0 0 .44 1.06l4.9 4.9a1.5 1.5 0 0 0 2.12 0l5.35-5.35a1.5 1.5 0 0 0 0-2.12l-4.9-4.9A1.5 1.5 0 0 0 9.6 2.75Z"/><circle cx="6.25" cy="6.25" r="1" fill="currentColor" stroke="none"/></svg></span>
         <div class="rotulo">Maior gasto</div>
-        <div class="valor" id="maior-categoria">Aluguel</div>
+        <div class="resumo-linha">
+          <div class="valor" id="maior-categoria">Aluguel</div>
+          <!-- INTEGRAR (opcional): parte do maior gasto no total de saídas do mês, ex.: "61% das saídas".
+               Se não for calcular, deixe o span vazio (sem espaço nem quebra de linha dentro) que ele some. -->
+          <span class="selo" id="maior-categoria-parte">61% das saídas</span>
+        </div>
       </div>
     </section>
 
-    <section class="secao duas-colunas">
+    <section class="secao">
 
       <div>
         <div class="secao-topo">
@@ -92,6 +102,27 @@
              Um item por semana, valores em reais. O data-semanas abaixo é só o exemplo inicial. -->
         <div class="grafico" id="grafico"
              data-semanas='[{"rotulo":"Sem 1","entradas":2500,"saidas":1200},{"rotulo":"Sem 2","entradas":0,"saidas":318.9},{"rotulo":"Sem 3","entradas":850,"saidas":266.5},{"rotulo":"Sem 4","entradas":0,"saidas":180}]'></div>
+      </div>
+
+    </section>
+
+    <section class="secao duas-colunas">
+
+      <div>
+        <div class="secao-topo">
+          <h2>Gastos por categoria</h2>
+          <span class="rotulo">% das saídas</span>
+        </div>
+        <!-- INTEGRAR: uma linha por categoria de saída com gasto no mês, da maior para a menor.
+             --p = gasto da categoria / total de saídas do mês (o mesmo número mostrado em .parte).
+             Sem saídas no mês: esconder #lista-gastos e mostrar #sem-gastos. -->
+        <div id="lista-gastos" role="list">
+          <div class="barra-linha" role="listitem" style="--p: 61%"><span class="nome">Aluguel</span><span class="num">R$ 1.200,00</span><span class="num parte">61%</span></div>
+          <div class="barra-linha" role="listitem" style="--p: 21%"><span class="nome">Alimentação</span><span class="num">R$ 412,40</span><span class="num parte">21%</span></div>
+          <div class="barra-linha" role="listitem" style="--p: 9%"><span class="nome">Lazer</span><span class="num">R$ 180,00</span><span class="num parte">9%</span></div>
+          <div class="barra-linha" role="listitem" style="--p: 9%"><span class="nome">Transporte</span><span class="num">R$ 173,00</span><span class="num parte">9%</span></div>
+        </div>
+        <div class="vazio" id="sem-gastos" hidden>Nenhuma saída neste mês.</div>
       </div>
 
       <div>
