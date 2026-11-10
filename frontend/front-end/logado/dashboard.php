@@ -1,4 +1,4 @@
-<?php require __DIR__ . '/../../config/auth.php'; ?>
+<?php require __DIR__ . '/../../../config/auth.php'; ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -30,7 +30,7 @@
       <span class="avatar" data-avatar-usuario aria-hidden="true"></span>
       <div class="usuario-texto">
         <strong id="nome-usuario">Nome do usuário</strong>
-        <a href="../../api/logout.php">Sair</a>
+        <a href="../../../api/logout.php">Sair</a>
       </div>
     </div>
   </aside>
