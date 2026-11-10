@@ -4,9 +4,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Transações · Fluxo</title>
+  <title>Transações · Nome do projeto</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Inter+Tight:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -16,32 +18,44 @@
 
   <aside class="lateral">
     <div>
-      <a class="marca" href="dashboard.php">Fluxo</a>
+      <a class="marca" href="dashboard.php">Nome do projeto</a>
       <nav class="menu" aria-label="Principal">
         <a href="dashboard.php">Dashboard</a>
         <a class="ativo" href="transacoes.php">Transações</a>
         <a href="categorias.php">Categorias</a>
       </nav>
     </div>
+    <!-- O avatar e a trilha leem o nome de #nome-usuario sozinhos (ver app.js) -->
     <div class="usuario">
-      <strong id="nome-usuario">Nome do usuário</strong>
-      <a href="../../api/logout.php">Sair</a>
+      <span class="avatar" data-avatar-usuario aria-hidden="true"></span>
+      <div class="usuario-texto">
+        <strong id="nome-usuario">Nome do usuário</strong>
+        <a href="../../api/logout.php">Sair</a>
+      </div>
     </div>
   </aside>
 
   <main class="conteudo">
 
+    <nav class="trilha" aria-label="Você está em">
+      <ol>
+        <li><a href="dashboard.php"><span class="avatar avatar-pp" data-avatar-usuario aria-hidden="true"></span><span data-primeiro-nome></span></a></li>
+        <li aria-hidden="true"><svg class="separador" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></li>
+        <li aria-current="page">Transações</li>
+      </ol>
+    </nav>
+
     <div class="topo">
       <h1>Transações</h1>
-      <button class="btn" data-abrir="modal-transacao">Nova transação</button>
+      <button class="btn" data-abrir="modal-transacao"><svg class="ico" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Nova transação</button>
     </div>
 
     <!-- INTEGRAR: mudar mês / tipo / categoria -> GET ../../api/transacoes.php?mes=2026-11&tipo=saida&categoria=4 -->
     <div class="filtros">
       <div class="seletor-mes">
-        <button class="btn-mes" data-mes="-1" aria-label="Mês anterior">‹</button>
+        <button class="btn-mes" data-mes="-1" aria-label="Mês anterior"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M11 4.5L6.5 9l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <span id="mes-atual">Nov 2026</span>
-        <button class="btn-mes" data-mes="1" aria-label="Próximo mês">›</button>
+        <button class="btn-mes" data-mes="1" aria-label="Próximo mês"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M7 4.5L11.5 9 7 13.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
       <div class="abas" role="group" aria-label="Filtrar por tipo">
         <button class="ativo" data-tipo="">Todas</button>
@@ -125,7 +139,10 @@
      INTEGRAR: POST (novo) ou PUT (editar, com id) para ../../api/transacoes.php -->
 <dialog id="modal-transacao">
   <form id="form-transacao" method="dialog" novalidate>
-    <h2>Nova transação</h2>
+    <div class="modal-topo">
+      <h2>Nova transação</h2>
+      <button type="button" class="fechar fechar-m" data-fechar aria-label="Fechar"><svg width="16.2" height="16.2" viewBox="0 0 16.2 16.2" fill="none" aria-hidden="true"><path d="M2 2L14.2 14.2M14.2 2L2 14.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+    </div>
     <div class="msg erro" id="msg-transacao" role="alert"></div>
     <input type="hidden" name="id">
 
@@ -141,7 +158,7 @@
     <div class="campo">
       <label for="t-categoria">Categoria</label>
       <!-- INTEGRAR: preencher com GET ../../api/categorias.php (value = id da categoria) -->
-      <select id="t-categoria" name="id_categoria" required>
+      <select id="t-categoria" name="id_categoria" required autofocus>
         <option value="">Selecione...</option>
         <option value="3" data-tipo="saida">Aluguel</option>
         <option value="4" data-tipo="saida">Alimentação</option>

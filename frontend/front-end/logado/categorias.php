@@ -4,9 +4,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Categorias · Fluxo</title>
+  <title>Categorias · Nome do projeto</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Inter+Tight:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -16,24 +18,36 @@
 
   <aside class="lateral">
     <div>
-      <a class="marca" href="dashboard.php">Fluxo</a>
+      <a class="marca" href="dashboard.php">Nome do projeto</a>
       <nav class="menu" aria-label="Principal">
         <a href="dashboard.php">Dashboard</a>
         <a href="transacoes.php">Transações</a>
         <a class="ativo" href="categorias.php">Categorias</a>
       </nav>
     </div>
+    <!-- O avatar e a trilha leem o nome de #nome-usuario sozinhos (ver app.js) -->
     <div class="usuario">
-      <strong id="nome-usuario">Nome do usuário</strong>
-      <a href="../../api/logout.php">Sair</a>
+      <span class="avatar" data-avatar-usuario aria-hidden="true"></span>
+      <div class="usuario-texto">
+        <strong id="nome-usuario">Nome do usuário</strong>
+        <a href="../../api/logout.php">Sair</a>
+      </div>
     </div>
   </aside>
 
   <main class="conteudo">
 
+    <nav class="trilha" aria-label="Você está em">
+      <ol>
+        <li><a href="dashboard.php"><span class="avatar avatar-pp" data-avatar-usuario aria-hidden="true"></span><span data-primeiro-nome></span></a></li>
+        <li aria-hidden="true"><svg class="separador" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></li>
+        <li aria-current="page">Categorias</li>
+      </ol>
+    </nav>
+
     <div class="topo">
       <h1>Categorias</h1>
-      <button class="btn" data-abrir="modal-categoria">Nova categoria</button>
+      <button class="btn" data-abrir="modal-categoria"><svg class="ico" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Nova categoria</button>
     </div>
     <p class="mudo" style="font-size:14px; margin:12px 0 0; max-width:520px; line-height:1.55">
       Os tipos de entrada e saída que você usa nas transações. Em saídas, o limite mensal é opcional e aparece no dashboard.
@@ -75,11 +89,11 @@
           <h2>Entradas <span class="contador" id="qtd-entradas">2</span></h2>
         </div>
         <div id="lista-entradas">
-          <div class="categoria-linha" data-id="1" style="grid-template-columns:1fr 110px">
+          <div class="categoria-linha" data-id="1" style="grid-template-columns:1fr 116px">
             <span class="nome">Salário</span>
             <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
           </div>
-          <div class="categoria-linha" data-id="2" style="grid-template-columns:1fr 110px">
+          <div class="categoria-linha" data-id="2" style="grid-template-columns:1fr 116px">
             <span class="nome">Bolsa estágio</span>
             <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
           </div>
@@ -98,13 +112,16 @@
      mostrar "Essa categoria tem transações. Apague ou mova as transações antes." -->
 <dialog id="modal-categoria">
   <form id="form-categoria" method="dialog" novalidate>
-    <h2>Nova categoria</h2>
+    <div class="modal-topo">
+      <h2>Nova categoria</h2>
+      <button type="button" class="fechar fechar-m" data-fechar aria-label="Fechar"><svg width="16.2" height="16.2" viewBox="0 0 16.2 16.2" fill="none" aria-hidden="true"><path d="M2 2L14.2 14.2M14.2 2L2 14.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+    </div>
     <div class="msg erro" id="msg-categoria" role="alert"></div>
     <input type="hidden" name="id">
 
     <div class="campo">
       <label for="c-nome">Nome</label>
-      <input type="text" id="c-nome" name="nome" maxlength="20" placeholder="Ex.: Bolsa estágio" required>
+      <input type="text" id="c-nome" name="nome" maxlength="20" placeholder="Ex.: Bolsa estágio" required autofocus>
       <span class="dica">Até 20 caracteres. Não pode repetir.</span>
     </div>
 

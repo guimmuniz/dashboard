@@ -4,9 +4,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard · Fluxo</title>
+  <title>Dashboard · Nome do projeto</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Inter+Tight:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -16,28 +18,40 @@
 
   <aside class="lateral">
     <div>
-      <a class="marca" href="dashboard.php">Fluxo</a>
+      <a class="marca" href="dashboard.php">Nome do projeto</a>
       <nav class="menu" aria-label="Principal">
         <a class="ativo" href="dashboard.php">Dashboard</a>
         <a href="transacoes.php">Transações</a>
         <a href="categorias.php">Categorias</a>
       </nav>
     </div>
+    <!-- O avatar e a trilha leem o nome de #nome-usuario sozinhos (ver app.js) -->
     <div class="usuario">
-      <strong id="nome-usuario">Nome do usuário</strong>
-      <a href="../../api/logout.php">Sair</a>
+      <span class="avatar" data-avatar-usuario aria-hidden="true"></span>
+      <div class="usuario-texto">
+        <strong id="nome-usuario">Nome do usuário</strong>
+        <a href="../../api/logout.php">Sair</a>
+      </div>
     </div>
   </aside>
 
   <main class="conteudo">
 
+    <nav class="trilha" aria-label="Você está em">
+      <ol>
+        <li><a href="dashboard.php"><span class="avatar avatar-pp" data-avatar-usuario aria-hidden="true"></span><span data-primeiro-nome></span></a></li>
+        <li aria-hidden="true"><svg class="separador" viewBox="0 0 12 12" fill="none"><path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></li>
+        <li aria-current="page">Dashboard</li>
+      </ol>
+    </nav>
+
     <div class="topo">
       <div class="seletor-mes">
-        <button class="btn-mes" data-mes="-1" aria-label="Mês anterior">‹</button>
+        <button class="btn-mes" data-mes="-1" aria-label="Mês anterior"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M11 4.5L6.5 9l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <span id="mes-atual">Nov 2026</span>
-        <button class="btn-mes" data-mes="1" aria-label="Próximo mês">›</button>
+        <button class="btn-mes" data-mes="1" aria-label="Próximo mês"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M7 4.5L11.5 9 7 13.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
-      <button class="btn" data-abrir="modal-transacao">Nova transação</button>
+      <button class="btn" data-abrir="modal-transacao"><svg class="ico" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Nova transação</button>
     </div>
 
     <!-- SALDO DO MÊS = total de entradas - total de saídas -->
@@ -72,15 +86,12 @@
             <span><i class="cor-saida"></i>Saídas</span>
           </div>
         </div>
-        <!-- Cada .barra recebe a altura em % do maior valor do mês: style="--h: 60%".
-             O JS só precisa calcular esse número por semana. -->
-        <div class="grafico" id="grafico">
-          <div class="semana"><div class="barra cor-entrada" style="--h: 100%" title="Entradas: R$ 2.500,00"></div><div class="barra cor-saida" style="--h: 48%" title="Saídas: R$ 1.200,00"></div></div>
-          <div class="semana"><div class="barra cor-entrada" style="--h: 0%"></div><div class="barra cor-saida" style="--h: 13%" title="Saídas: R$ 318,90"></div></div>
-          <div class="semana"><div class="barra cor-entrada" style="--h: 34%" title="Entradas: R$ 850,00"></div><div class="barra cor-saida" style="--h: 11%" title="Saídas: R$ 266,50"></div></div>
-          <div class="semana"><div class="barra cor-entrada" style="--h: 0%"></div><div class="barra cor-saida" style="--h: 7%" title="Saídas: R$ 180,00"></div></div>
-        </div>
-        <div class="eixo rotulo"><span>Sem 1</span><span>Sem 2</span><span>Sem 3</span><span>Sem 4</span></div>
+        <!-- Gráfico de linhas desenhado pelo JS dentro de #grafico (desenharGrafico em app.js).
+             INTEGRAR: com os totais do mês em mãos, chamar
+               desenharGrafico([{ rotulo: 'Sem 1', entradas: 2500, saidas: 1200 }, ...])
+             Um item por semana, valores em reais. O data-semanas abaixo é só o exemplo inicial. -->
+        <div class="grafico" id="grafico"
+             data-semanas='[{"rotulo":"Sem 1","entradas":2500,"saidas":1200},{"rotulo":"Sem 2","entradas":0,"saidas":318.9},{"rotulo":"Sem 3","entradas":850,"saidas":266.5},{"rotulo":"Sem 4","entradas":0,"saidas":180}]'></div>
       </div>
 
       <div>
@@ -89,23 +100,27 @@
           <a class="link" href="categorias.php">Editar</a>
         </div>
         <!-- Só categorias de saída com limite_mensal preenchido.
-             --p = gasto / limite (máx. 100%). Passou do limite -> classe "estourou". -->
+             --p = gasto / limite (máx. 100%).
+             Gasto em 80% do limite ou mais -> classe "atencao" (barra amarela).
+             Passou do limite -> classe "estourou" (barra vermelha) + a linha .orcamento-nota.
+             role="meter" e os aria-* são para leitores de tela: aria-valuenow = gasto (no máximo o limite). -->
         <div id="lista-limites">
-          <div class="orcamento">
-            <div class="orcamento-topo"><span>Aluguel</span><span class="num mudo">1.200 / 1.200</span></div>
+          <div class="orcamento atencao" role="meter" aria-label="Aluguel" aria-valuemin="0" aria-valuemax="1200" aria-valuenow="1200" aria-valuetext="R$ 1.200 de R$ 1.200">
+            <div class="orcamento-topo"><span>Aluguel</span><span class="num">1.200 / 1.200</span></div>
             <div class="trilho"><div style="--p: 100%"></div></div>
           </div>
-          <div class="orcamento">
-            <div class="orcamento-topo"><span>Alimentação</span><span class="num mudo">412 / 600</span></div>
+          <div class="orcamento" role="meter" aria-label="Alimentação" aria-valuemin="0" aria-valuemax="600" aria-valuenow="412" aria-valuetext="R$ 412 de R$ 600">
+            <div class="orcamento-topo"><span>Alimentação</span><span class="num">412 / 600</span></div>
             <div class="trilho"><div style="--p: 69%"></div></div>
           </div>
-          <div class="orcamento">
-            <div class="orcamento-topo"><span>Transporte</span><span class="num mudo">173 / 250</span></div>
+          <div class="orcamento" role="meter" aria-label="Transporte" aria-valuemin="0" aria-valuemax="250" aria-valuenow="173" aria-valuetext="R$ 173 de R$ 250">
+            <div class="orcamento-topo"><span>Transporte</span><span class="num">173 / 250</span></div>
             <div class="trilho"><div style="--p: 69%"></div></div>
           </div>
-          <div class="orcamento estourou">
-            <div class="orcamento-topo"><span>Lazer</span><span class="num">180 / 150 · acima do limite</span></div>
+          <div class="orcamento estourou" role="meter" aria-label="Lazer" aria-valuemin="0" aria-valuemax="150" aria-valuenow="150" aria-valuetext="R$ 180 de R$ 150, acima do limite">
+            <div class="orcamento-topo"><span>Lazer</span><span class="num">180 / 150</span></div>
             <div class="trilho"><div style="--p: 100%"></div></div>
+            <span class="orcamento-nota">R$ 30 acima do limite</span>
           </div>
         </div>
       </div>
@@ -165,7 +180,10 @@
      INTEGRAR: POST (novo) ou PUT (editar, com id) para ../../api/transacoes.php -->
 <dialog id="modal-transacao">
   <form id="form-transacao" method="dialog" novalidate>
-    <h2>Nova transação</h2>
+    <div class="modal-topo">
+      <h2>Nova transação</h2>
+      <button type="button" class="fechar fechar-m" data-fechar aria-label="Fechar"><svg width="16.2" height="16.2" viewBox="0 0 16.2 16.2" fill="none" aria-hidden="true"><path d="M2 2L14.2 14.2M14.2 2L2 14.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+    </div>
     <div class="msg erro" id="msg-transacao" role="alert"></div>
     <input type="hidden" name="id">
 
@@ -181,7 +199,7 @@
     <div class="campo">
       <label for="t-categoria">Categoria</label>
       <!-- INTEGRAR: preencher com GET ../../api/categorias.php (value = id da categoria) -->
-      <select id="t-categoria" name="id_categoria" required>
+      <select id="t-categoria" name="id_categoria" required autofocus>
         <option value="">Selecione...</option>
         <option value="3" data-tipo="saida">Aluguel</option>
         <option value="4" data-tipo="saida">Alimentação</option>

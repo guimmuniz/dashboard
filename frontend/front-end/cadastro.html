@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Criar conta · Fluxo</title>
+  <title>Criar conta · Nome do projeto</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Inter+Tight:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://api.fontshare.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,7 +15,7 @@
 <div class="entrada-pagina">
 
   <section class="entrada-lado">
-    <a class="marca" href="index.html" style="text-decoration:none">Fluxo</a>
+    <a class="marca" href="index.html">Nome do projeto</a>
     <div>
       <h1>Comece pelo básico: quanto entra por mês.</h1>
       <p>Depois do cadastro você cria suas categorias (salário, bolsa estágio, aluguel, alimentação...) e começa a lançar as transações.</p>
@@ -50,6 +52,12 @@
         <label for="confirmar">Confirmar senha</label>
         <input type="password" id="confirmar" name="confirmar" autocomplete="new-password" required>
       </div>
+
+      <label class="caixa">
+        <input type="checkbox" data-mostrar-senha>
+        <span class="caixa-marca"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 7.7002L6.64645 10.3466C6.84171 10.5419 7.15829 10.5419 7.35355 10.3466L12 5.7002" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></svg></span>
+        Mostrar senha
+      </label>
 
       <button type="submit" class="btn">Criar conta</button>
 
