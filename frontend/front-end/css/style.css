@@ -1,0 +1,356 @@
+/* ==========================================================
+   Fluxo — estilos globais
+   Cores e medidas ficam nas variáveis abaixo: mude aqui e
+   todas as páginas acompanham.
+   ========================================================== */
+
+:root {
+  --acento: #0F766E;
+  --acento-escuro: #0B5A54;
+  --texto: #18181B;
+  --texto-2: #52525B;
+  --texto-3: #71717A;
+  --borda: #E4E4E7;
+  --linha: #EDEDEF;
+  --fundo: #FAFAFA;
+  --fundo-hover: #F2F2F4;
+  --branco: #FFFFFF;
+  --erro: #B42318;
+  --raio: 8px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--texto);
+  background: var(--fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .titulo {
+  font-family: 'Inter Tight', 'Inter', sans-serif;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.num { font-variant-numeric: tabular-nums; }
+.rotulo { font-size: 12px; color: var(--texto-3); letter-spacing: .01em; }
+.mudo { color: var(--texto-3); }
+
+a { color: inherit; }
+
+/* ---------- botões ---------- */
+
+button { font-family: inherit; cursor: pointer; }
+
+.btn {
+  border: 0;
+  border-radius: var(--raio);
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--branco);
+  background: var(--acento);
+  transition: background .15s;
+}
+.btn:hover { background: var(--acento-escuro); }
+
+.btn-borda {
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  height: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--texto);
+  background: var(--branco);
+}
+.btn-borda:hover { background: var(--fundo-hover); }
+
+.btn-texto {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--texto-3);
+}
+.btn-texto:hover { color: var(--texto); }
+.btn-texto.perigo:hover { color: var(--erro); }
+
+.btn-mes {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: none;
+  color: var(--texto-2);
+  font-size: 16px;
+}
+.btn-mes:hover { background: var(--fundo-hover); }
+
+.link {
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid #D4D4D8;
+  padding-bottom: 1px;
+}
+.link:hover { border-color: var(--texto); }
+
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+/* ---------- formulários ---------- */
+
+.campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.campo label { font-size: 13px; font-weight: 500; }
+.campo .dica { font-size: 12px; color: var(--texto-3); }
+
+input, select {
+  font: inherit;
+  font-size: 14px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  background: var(--branco);
+  color: var(--texto);
+}
+input:focus, select:focus { outline: none; border-color: var(--acento); box-shadow: 0 0 0 3px rgba(15,118,110,.12); }
+
+.grupo-radio { display: flex; gap: 8px; }
+.grupo-radio label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.grupo-radio input { height: auto; margin: 0; accent-color: var(--acento); }
+.grupo-radio label:has(input:checked) { border-color: var(--acento); background: #F0FAF8; }
+
+/* caixa de mensagem (erro / sucesso) — o JS troca o texto e a classe */
+.msg { font-size: 13px; padding: 10px 12px; border-radius: var(--raio); margin-bottom: 16px; }
+.msg.erro { background: #FEF3F2; color: var(--erro); }
+.msg.ok { background: #F0FAF8; color: var(--acento-escuro); }
+.msg:empty { display: none; }
+
+/* ==========================================================
+   Layout do app (páginas logadas)
+   ========================================================== */
+
+.app { display: flex; min-height: 100vh; }
+
+.lateral {
+  width: 224px;
+  flex-shrink: 0;
+  padding: 32px 24px;
+  border-right: 1px solid var(--linha);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.marca { font-family: 'Inter Tight', sans-serif; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+.lateral .marca { margin-bottom: 44px; display: block; text-decoration: none; }
+
+.menu a {
+  display: block;
+  padding: 7px 10px;
+  margin: 0 -10px 2px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--texto-3);
+  text-decoration: none;
+}
+.menu a:hover { background: var(--fundo-hover); color: var(--texto); }
+.menu a.ativo { background: var(--fundo-hover); color: var(--texto); font-weight: 500; }
+
+.usuario { font-size: 13px; color: var(--texto-3); }
+.usuario strong { display: block; color: var(--texto); font-weight: 500; margin-bottom: 4px; }
+.usuario a { text-decoration: none; }
+.usuario a:hover { color: var(--texto); }
+
+.conteudo { flex: 1; min-width: 0; max-width: 1120px; padding: 32px 72px 120px 80px; }
+
+.topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.topo h1 { font-size: 28px; font-weight: 600; }
+
+.seletor-mes { display: flex; align-items: center; gap: 12px; }
+.seletor-mes span { font-size: 14px; font-weight: 500; min-width: 96px; text-align: center; }
+
+.secao { margin-top: 88px; }
+.secao-topo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+.secao h2 { font-size: 18px; font-weight: 600; }
+
+.duas-colunas { display: grid; grid-template-columns: 1.4fr 1fr; gap: 88px; }
+
+/* ---------- dashboard ---------- */
+
+.saldo { margin-top: 72px; }
+.saldo-valor { font-family: 'Inter Tight', sans-serif; font-size: 76px; font-weight: 600; line-height: 1; letter-spacing: -0.04em; margin-top: 12px; }
+.saldo-valor .centavos { color: #A1A1AA; }
+.saldo p { margin: 18px 0 0; font-size: 15px; color: var(--texto-2); max-width: 440px; line-height: 1.55; }
+
+.resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; margin-top: 64px; }
+.resumo > div { border-top: 1px solid var(--borda); padding-top: 16px; }
+.resumo .valor { font-family: 'Inter Tight', sans-serif; font-size: 26px; font-weight: 500; margin-top: 8px; }
+
+/* gráfico de barras em CSS: cada .barra recebe a altura em % via style="--h: 60%" */
+.legenda { display: flex; gap: 16px; }
+.legenda i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.cor-entrada { background: var(--acento); }
+.cor-saida { background: #8B8B93; }
+
+.grafico {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: 200px;
+  margin-top: 28px;
+  border-bottom: 1px solid var(--borda);
+  background: repeating-linear-gradient(to top, transparent 0 49px, var(--linha) 49px 50px);
+}
+.semana { display: flex; align-items: flex-end; justify-content: center; gap: 4px; }
+.barra { width: 26px; height: var(--h, 0%); border-radius: 3px 3px 0 0; transition: opacity .15s; }
+.grafico:hover .barra { opacity: .45; }
+.grafico .barra:hover { opacity: 1; }
+.eixo { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 10px; text-align: center; }
+
+/* orçamento por categoria */
+.orcamento { padding: 12px 0; }
+.orcamento-topo { display: flex; justify-content: space-between; font-size: 14px; }
+.trilho { height: 4px; background: var(--linha); border-radius: 2px; margin-top: 10px; }
+.trilho div { height: 4px; width: var(--p, 0%); background: #27272A; border-radius: 2px; }
+.orcamento.estourou .orcamento-topo .num { color: var(--erro); font-weight: 500; }
+.orcamento.estourou .trilho div { background: var(--erro); }
+
+/* ---------- lista de transações (dashboard e transacoes.html) ---------- */
+
+.lista-linha {
+  display: grid;
+  grid-template-columns: 64px 1fr 140px 130px 110px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 12px;
+  margin: 0 -12px;
+  border-top: 1px solid var(--linha);
+  font-size: 14px;
+}
+.lista-linha:hover { background: #F4F4F5; }
+.lista-linha:last-child { border-bottom: 1px solid var(--linha); }
+.lista-linha .descricao { font-weight: 500; }
+.lista-linha .valor { text-align: right; }
+.lista-linha .valor.entrada { color: var(--acento); font-weight: 500; }
+.lista-linha .valor.saida { color: var(--texto-2); }
+.acoes { display: flex; gap: 14px; justify-content: flex-end; opacity: 0; transition: opacity .15s; }
+.lista-linha:hover .acoes, .lista-linha:focus-within .acoes { opacity: 1; }
+
+.lista-cabecalho { display: grid; grid-template-columns: 64px 1fr 140px 130px 110px; gap: 16px; padding: 0 0 10px; }
+.lista-cabecalho span:nth-child(4) { text-align: right; }
+
+.vazio { padding: 48px 0; text-align: center; color: var(--texto-3); font-size: 14px; border-top: 1px solid var(--linha); }
+
+/* ---------- transacoes.html ---------- */
+
+.filtros { display: flex; gap: 12px; align-items: center; margin-top: 40px; flex-wrap: wrap; }
+.filtros select, .filtros input { height: 36px; }
+.abas { display: inline-flex; border: 1px solid var(--borda); border-radius: var(--raio); padding: 2px; background: var(--branco); }
+.abas button { border: 0; background: none; height: 30px; padding: 0 12px; border-radius: 6px; font-size: 13px; color: var(--texto-3); }
+.abas button.ativo { background: var(--fundo-hover); color: var(--texto); font-weight: 500; }
+
+.totais { display: flex; gap: 40px; margin-top: 32px; padding-bottom: 24px; font-size: 14px; }
+.totais strong { display: block; font-family: 'Inter Tight', sans-serif; font-size: 20px; font-weight: 500; margin-top: 4px; }
+
+/* ---------- categorias.html ---------- */
+
+.categoria-linha {
+  display: grid;
+  grid-template-columns: 1fr 160px 110px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 12px;
+  margin: 0 -12px;
+  border-top: 1px solid var(--linha);
+  font-size: 14px;
+}
+.categoria-linha:hover { background: #F4F4F5; }
+.categoria-linha:last-child { border-bottom: 1px solid var(--linha); }
+.categoria-linha .nome { font-weight: 500; }
+.categoria-linha:hover .acoes, .categoria-linha:focus-within .acoes { opacity: 1; }
+.contador { font-size: 12px; color: var(--texto-3); font-weight: 400; margin-left: 6px; }
+
+/* ---------- modal (<dialog>) ---------- */
+
+dialog {
+  border: 0;
+  border-radius: 12px;
+  padding: 28px;
+  width: min(420px, calc(100vw - 32px));
+  box-shadow: 0 20px 50px rgba(24,24,27,.18);
+}
+dialog::backdrop { background: rgba(24,24,27,.35); }
+dialog h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+.modal-botoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+
+/* ==========================================================
+   Login e cadastro
+   ========================================================== */
+
+.entrada-pagina { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+
+.entrada-lado {
+  padding: 40px 56px;
+  border-right: 1px solid var(--linha);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.entrada-lado h1 { font-size: 44px; font-weight: 600; line-height: 1.08; letter-spacing: -0.035em; max-width: 440px; }
+.entrada-lado p { color: var(--texto-2); font-size: 15px; line-height: 1.55; max-width: 380px; margin: 20px 0 0; }
+
+.entrada-form { display: flex; align-items: center; justify-content: center; padding: 40px 24px; background: var(--branco); }
+.entrada-form form { width: 100%; max-width: 340px; }
+.entrada-form h2 { font-size: 24px; font-weight: 600; margin-bottom: 6px; }
+.entrada-form .sub { font-size: 14px; color: var(--texto-3); margin: 0 0 28px; }
+.entrada-form .btn { width: 100%; margin-top: 8px; }
+.troca { font-size: 14px; color: var(--texto-3); margin-top: 24px; text-align: center; }
+
+/* ==========================================================
+   Telas menores
+   ========================================================== */
+
+@media (max-width: 900px) {
+  .app { flex-direction: column; }
+  .lateral { width: auto; height: auto; position: static; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px 20px; border-right: 0; border-bottom: 1px solid var(--linha); }
+  .lateral .marca { margin: 0 16px 0 0; }
+  .menu { display: flex; gap: 4px; }
+  .menu a { margin: 0; }
+  .conteudo { padding: 24px 20px 64px; }
+  .duas-colunas, .resumo { grid-template-columns: 1fr; gap: 40px; }
+  .saldo-valor { font-size: 52px; }
+  .lista-linha, .lista-cabecalho { grid-template-columns: 56px 1fr 110px; }
+  .lista-linha .cat, .lista-cabecalho span:nth-child(3), .lista-cabecalho span:nth-child(5) { display: none; }
+  .acoes { opacity: 1; grid-column: 2 / -1; justify-content: flex-start; }
+  .entrada-pagina { grid-template-columns: 1fr; }
+  .entrada-lado { border-right: 0; border-bottom: 1px solid var(--linha); padding: 28px 24px; gap: 32px; }
+  .entrada-lado h1 { font-size: 32px; }
+}
+
+/* alinhamento da coluna de limite em categorias.html */
+.categoria-linha .num { text-align: right; }
+.cabecalho-limite { margin-right: 126px; }
+@media (max-width: 900px) { .cabecalho-limite { margin-right: 0; } .categoria-linha { grid-template-columns: 1fr auto !important; } .categoria-linha .acoes { grid-column: 1 / -1; } }
+.totais strong { white-space: nowrap; }
+@media (max-width: 900px) { .totais { gap: 24px; flex-wrap: wrap; } .totais strong { font-size: 17px; } }
