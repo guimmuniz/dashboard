@@ -10,9 +10,9 @@
 //   Contadores (#qtd-transacoes, #qtd-saidas, #qtd-entradas) se atualizam sozinhos.
 // ==========================================================
 
-// Caminho da API a partir deste arquivo (frontend/front-end/js/app.js -> dashboard/api/).
+// Caminho da API a partir deste arquivo (frontend/js/app.js -> dashboard/api/).
 // Funciona igual em index.html e em logado/*.php. Uso: fetch(API + 'transacoes.php')
-const API = new URL('../../../api/', document.currentScript.src).href;
+const API = new URL('../../api/', document.currentScript.src).href;
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
