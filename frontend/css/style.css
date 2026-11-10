@@ -354,6 +354,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 }
 .grupo-radio input { height: auto; margin: 0; padding: 0; box-shadow: none; accent-color: var(--acento-600); }
 .grupo-radio label:has(input:checked) { border-color: var(--acento-500); background: var(--acento-50); }
+.grupo-radio label:has(input:focus-visible) { outline: 2px solid var(--acento-500); outline-offset: 2px; }
 
 /* ---------- checkbox (BoardUI Checkbox) ----------
    <label class="caixa"><input type="checkbox"><span class="caixa-marca"><svg>…</svg></span>Texto</label>
@@ -474,7 +475,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 
 .saldo { margin-top: 64px; }
 .saldo-valor { font-family: var(--fonte-titulo); font-size: 76px; font-weight: 600; line-height: 1; letter-spacing: -0.01em; margin-top: 12px; }
-.saldo-valor .centavos { color: #A1A1AA; }
+.saldo-valor .centavos { color: var(--texto-3); }
 .saldo p { margin: 18px 0 0; font-size: 15px; color: var(--texto-2); max-width: 440px; line-height: 1.55; }
 
 /* resumo: uma faixa suave só, com ícone + rótulo + valor em cada parte */
@@ -497,7 +498,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .cor-entrada { background: var(--serie-entrada); }
 .cor-saida { background: var(--serie-saida); }
 
-.grafico { position: relative; height: 260px; margin-top: 20px; user-select: none; border-radius: var(--raio); }
+.grafico { position: relative; height: 260px; margin-top: 20px; user-select: none; touch-action: pan-y; border-radius: var(--raio); }
 .grafico svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .grafico .grade { stroke: var(--borda); stroke-width: 1; }
 .grafico .base { stroke: var(--borda-forte); }
@@ -563,7 +564,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .grafico .vazio { border-top: 0; padding: 104px 0 0; }
 
 /* ---------- gastos por categoria (ideia do Bar List Card do BoardUI) ----------
-   Cada linha tem uma barra de fundo com a parte da categoria nas saídas do mês:
+   Cada linha tem uma barra atrás do nome com a parte da categoria nas saídas do mês:
    <div class="barra-linha" style="--p: 61%"><span class="nome">…</span><span class="num">R$ …</span><span class="num parte">61%</span></div> */
 .barra-linha {
   position: relative;
@@ -573,11 +574,11 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
   gap: 12px;
   min-height: 36px;
   margin-bottom: 4px;
-  padding: 0 10px;
+  padding: 0 10px 0 0;
   border-radius: 8px;
   font-size: 14px;
 }
-.barra-linha::before {
+.barra-linha .nome::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
@@ -587,7 +588,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
   border-radius: 8px;
   background: color-mix(in srgb, var(--serie-saida) 18%, transparent);
 }
-.barra-linha .nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.barra-linha .nome { position: relative; align-self: stretch; flex: 1; min-width: 0; padding: 0 10px; border-radius: 8px; line-height: 36px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .barra-linha .num { flex-shrink: 0; color: var(--texto-2); }
 .barra-linha .parte { width: 38px; text-align: right; color: var(--texto); font-weight: 500; }
 
@@ -629,7 +630,7 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 }
 .lista-linha:hover { background: var(--fundo-hover); }
 .lista-linha:last-child { border-bottom: 1px solid var(--linha); }
-.lista-linha .descricao { font-weight: 500; min-width: 0; }
+.lista-linha .descricao { font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
 .lista-linha .descricao:empty::before { content: "Sem descrição"; color: var(--texto-3); font-weight: 400; }
 /* categoria como etiqueta neutra (o banco não guarda cor por categoria) */
 .lista-linha .cat { justify-self: start; max-width: 100%; padding: 2px 8px; border-radius: 6px; background: var(--fundo-ativo); color: var(--texto-2); font-size: 12px; font-weight: 500; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -657,14 +658,14 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .abas button.ativo { background: var(--fundo-hover); color: var(--texto); font-weight: 500; }
 .resultado { margin-left: auto; }
 
-.totais { display: flex; gap: 40px; margin-top: 32px; padding-bottom: 24px; font-size: 14px; }
+.totais { display: flex; flex-wrap: wrap; gap: 16px 40px; margin-top: 32px; padding-bottom: 24px; font-size: 14px; }
 .totais strong { display: block; font-family: var(--fonte-titulo); font-size: 20px; font-weight: 500; margin-top: 4px; white-space: nowrap; }
 
 /* ---------- categorias.php ---------- */
 
 .categoria-linha {
   display: grid;
-  grid-template-columns: 1fr 160px 116px;
+  grid-template-columns: minmax(0, 1fr) auto 116px;
   align-items: center;
   gap: 16px;
   padding: 14px 12px;
@@ -675,10 +676,10 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 }
 .categoria-linha:hover { background: var(--fundo-hover); }
 .categoria-linha:last-child { border-bottom: 1px solid var(--linha); }
-.categoria-linha .nome { font-weight: 500; }
+.categoria-linha .nome { font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
 .categoria-linha .num { text-align: right; }
 .categoria-linha:hover .acoes, .categoria-linha:focus-within .acoes { opacity: 1; }
-#lista-entradas .categoria-linha { grid-template-columns: 1fr 116px; }
+#lista-entradas .categoria-linha { grid-template-columns: minmax(0, 1fr) 116px; }
 .categoria-linha .num:empty::before { content: "Sem limite"; }
 .marca-cor { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; vertical-align: middle; }
 .contador { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--fundo-ativo); color: var(--texto-2); font-family: var(--fonte); font-size: 12px; font-weight: 500; line-height: 16px; letter-spacing: 0; word-spacing: normal; vertical-align: middle; font-variant-numeric: tabular-nums; }
@@ -784,6 +785,15 @@ dialog h2 { font-size: 20px; font-weight: 500; }
    Telas menores
    ========================================================== */
 
+/* entre 901 e 1100px a barra lateral ainda aparece e sobra pouco espaço:
+   as duas colunas viram uma e as ações da linha descem para a segunda linha */
+@media (max-width: 1100px) {
+  .duas-colunas { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .lista-linha, .lista-cabecalho { grid-template-columns: 56px minmax(0, 1fr) 120px 120px; }
+  .lista-cabecalho span:nth-child(5) { display: none; }
+  .lista-linha .acoes { opacity: 1; grid-column: 2 / -1; justify-content: flex-start; margin-left: -8px; }
+}
+
 @media (max-width: 900px) {
   .app { flex-direction: column; }
   .lateral { width: auto; height: auto; position: static; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px 20px; border-right: 0; border-bottom: 1px solid var(--linha); }
@@ -799,7 +809,6 @@ dialog h2 { font-size: 20px; font-weight: 500; }
   .resumo-icone { grid-row: 1 / span 2; margin: 0; }
   .resumo .valor, .resumo-linha { margin-top: 2px; }
   .resultado { margin-left: 0; }
-  .lista-linha .descricao { overflow-wrap: anywhere; }
   .secao { margin-top: 56px; }
   .saldo { margin-top: 40px; }
   .saldo-valor { font-size: 48px; }

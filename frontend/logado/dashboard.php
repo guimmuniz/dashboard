@@ -50,7 +50,7 @@
     <div class="topo">
       <div class="seletor-mes">
         <button class="btn-mes" data-mes="-1" aria-label="Mês anterior"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M11 4.5L6.5 9l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-        <span id="mes-atual">Nov 2026</span>
+        <span id="mes-atual" aria-live="polite">Nov 2026</span>
         <button class="btn-mes" data-mes="1" aria-label="Próximo mês"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M7 4.5L11.5 9 7 13.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
       <button class="btn" data-abrir="modal-transacao"><svg class="ico" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4.5v11M4.5 10h11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Nova transação</button>
@@ -209,28 +209,28 @@
 <!-- ===== Modal: nova / editar transação (igual ao de transacoes.html) =====
      Campos com os mesmos nomes das colunas da tabela transacao.
      INTEGRAR: POST (novo) ou PUT (editar, com id) para ../../api/transacoes.php -->
-<dialog id="modal-transacao">
+<dialog id="modal-transacao" aria-labelledby="titulo-modal-transacao">
   <form id="form-transacao" method="dialog" novalidate>
     <div class="modal-topo">
-      <h2>Nova transação</h2>
+      <h2 id="titulo-modal-transacao">Nova transação</h2>
       <button type="button" class="fechar fechar-m" data-fechar aria-label="Fechar"><svg width="16.2" height="16.2" viewBox="0 0 16.2 16.2" fill="none" aria-hidden="true"><path d="M2 2L14.2 14.2M14.2 2L2 14.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
     </div>
     <div class="msg erro" id="msg-transacao" role="alert"></div>
     <input type="hidden" name="id">
 
     <div class="campo">
-      <label>Tipo</label>
-      <div class="grupo-radio">
-        <label><input type="radio" name="tipo" value="saida" checked> Saída</label>
+      <label id="t-tipo-rotulo">Tipo</label>
+      <div class="grupo-radio" role="radiogroup" aria-labelledby="t-tipo-rotulo" aria-describedby="t-tipo-dica">
+        <label><input type="radio" name="tipo" value="saida" checked autofocus> Saída</label>
         <label><input type="radio" name="tipo" value="entrada"> Entrada</label>
       </div>
-      <span class="dica">Filtra as categorias abaixo.</span>
+      <span class="dica" id="t-tipo-dica">Filtra as categorias abaixo.</span>
     </div>
 
     <div class="campo">
       <label for="t-categoria">Categoria</label>
       <!-- INTEGRAR: preencher com GET ../../api/categorias.php (value = id da categoria) -->
-      <select id="t-categoria" name="id_categoria" required autofocus>
+      <select id="t-categoria" name="id_categoria" required>
         <option value="">Selecione...</option>
         <option value="3" data-tipo="saida">Aluguel</option>
         <option value="4" data-tipo="saida">Alimentação</option>

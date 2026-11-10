@@ -112,10 +112,10 @@
      INTEGRAR: POST (novo) ou PUT (editar, com id) para ../../api/categorias.php.
      Excluir: o banco usa ON DELETE RESTRICT, então categoria com transação vai dar erro ->
      mostrar "Essa categoria tem transações. Apague ou mova as transações antes." -->
-<dialog id="modal-categoria">
+<dialog id="modal-categoria" aria-labelledby="titulo-modal-categoria">
   <form id="form-categoria" method="dialog" novalidate>
     <div class="modal-topo">
-      <h2>Nova categoria</h2>
+      <h2 id="titulo-modal-categoria">Nova categoria</h2>
       <button type="button" class="fechar fechar-m" data-fechar aria-label="Fechar"><svg width="16.2" height="16.2" viewBox="0 0 16.2 16.2" fill="none" aria-hidden="true"><path d="M2 2L14.2 14.2M14.2 2L2 14.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></button>
     </div>
     <div class="msg erro" id="msg-categoria" role="alert"></div>
@@ -128,8 +128,8 @@
     </div>
 
     <div class="campo">
-      <label>Tipo</label>
-      <div class="grupo-radio">
+      <label id="c-tipo-rotulo">Tipo</label>
+      <div class="grupo-radio" role="radiogroup" aria-labelledby="c-tipo-rotulo">
         <label><input type="radio" name="tipo" value="saida" checked> Saída</label>
         <label><input type="radio" name="tipo" value="entrada"> Entrada</label>
       </div>

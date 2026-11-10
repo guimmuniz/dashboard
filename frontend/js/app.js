@@ -38,18 +38,20 @@ const ICONES_AVISO = {
 const X_PEQUENO = '<svg width="10.8" height="10.8" viewBox="0 0 10.8 10.8" fill="none" aria-hidden="true"><path d="M2 2L8.8 8.8M8.8 2L2 8.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const X_MEDIO = '<svg width="16.2" height="16.2" viewBox="0 0 16.2 16.2" fill="none" aria-hidden="true"><path d="M2 2L14.2 14.2M14.2 2L2 14.2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>';
 
+// A região já existe vazia desde o carregamento: leitores de tela só anunciam
+// o que entra numa região viva que já estava na página.
+const PILHA_AVISOS = document.createElement('div');
+PILHA_AVISOS.className = 'avisos';
+PILHA_AVISOS.setAttribute('role', 'region');
+PILHA_AVISOS.setAttribute('aria-label', 'Notificações');
+PILHA_AVISOS.setAttribute('aria-live', 'polite');
+document.body.append(PILHA_AVISOS);
+
 function notificar({ titulo, descricao = '', status = 'sucesso', duracao = 5000 }) {
-  let pilha = document.querySelector('.avisos');
-  if (!pilha) {
-    pilha = document.createElement('div');
-    pilha.className = 'avisos';
-    pilha.setAttribute('aria-label', 'Notificações');
-    document.body.append(pilha);
-  }
 
   const aviso = document.createElement('div');
   aviso.className = 'aviso ' + status;
-  aviso.setAttribute('role', status === 'erro' ? 'alert' : 'status');
+  if (status === 'erro') aviso.setAttribute('role', 'alert');
   aviso.innerHTML =
     '<span class="aviso-icone"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="' + (ICONES_AVISO[status] || ICONES_AVISO.info) + '"/></svg></span>' +
     '<div class="aviso-texto"><p class="aviso-titulo"></p></div>' +
@@ -79,13 +81,18 @@ function notificar({ titulo, descricao = '', status = 'sucesso', duracao = 5000 
       [{ transform: 'scaleX(1)' }, { transform: 'scaleX(0)' }],
       { duration: duracao, easing: 'linear', fill: 'forwards' });
     contagem.onfinish = fechar;
-    aviso.addEventListener('mouseenter', () => contagem.pause());
-    aviso.addEventListener('mouseleave', () => contagem.play());
-    aviso.addEventListener('focusin', () => contagem.pause());
-    aviso.addEventListener('focusout', () => contagem.play());
+    let sobre = false, foco = false;
+    const sincronizar = () => {
+      if (sobre || foco) contagem.pause();
+      else if (contagem.playState !== 'finished') contagem.play();
+    };
+    aviso.addEventListener('mouseenter', () => { sobre = true; sincronizar(); });
+    aviso.addEventListener('mouseleave', () => { sobre = false; sincronizar(); });
+    aviso.addEventListener('focusin', () => { foco = true; sincronizar(); });
+    aviso.addEventListener('focusout', () => { foco = false; sincronizar(); });
   }
 
-  pilha.append(aviso);
+  PILHA_AVISOS.append(aviso);
   return aviso;
 }
 
@@ -96,9 +103,11 @@ function confirmar({ titulo, texto = '', acao = 'Excluir' }) {
   if (!modal) {
     modal = document.createElement('dialog');
     modal.id = 'modal-confirmar';
+    modal.setAttribute('aria-labelledby', 'titulo-modal-confirmar');
+    modal.setAttribute('aria-describedby', 'texto-modal-confirmar');
     modal.innerHTML =
-      '<div class="modal-topo"><h2></h2><button type="button" class="fechar fechar-m" value="nao" aria-label="Fechar">' + X_MEDIO + '</button></div>' +
-      '<p class="modal-texto"></p>' +
+      '<div class="modal-topo"><h2 id="titulo-modal-confirmar"></h2><button type="button" class="fechar fechar-m" value="nao" aria-label="Fechar">' + X_MEDIO + '</button></div>' +
+      '<p class="modal-texto" id="texto-modal-confirmar"></p>' +
       '<div class="modal-botoes"><button type="button" class="btn-borda" value="nao">Cancelar</button><button type="button" class="btn-perigo" value="sim"></button></div>';
     modal.addEventListener('click', e => {
       const botao = e.target.closest('button[value]');
@@ -124,7 +133,7 @@ function confirmar({ titulo, texto = '', acao = 'Excluir' }) {
 const nomeUsuario = document.getElementById('nome-usuario');
 function atualizarUsuario() {
   const nome = nomeUsuario.textContent.trim();
-  document.querySelectorAll('[data-avatar-usuario]').forEach(el => { el.textContent = (nome[0] || '?').toUpperCase(); });
+  document.querySelectorAll('[data-avatar-usuario]').forEach(el => { el.textContent = (Array.from(nome)[0] || '?').toUpperCase(); });
   document.querySelectorAll('[data-primeiro-nome]').forEach(el => { el.textContent = nome.split(/\s+/)[0] || 'Você'; });
 }
 if (nomeUsuario) {
@@ -147,7 +156,8 @@ function atualizarMes() {
 
 document.querySelectorAll('[data-mes]').forEach(btn => {
   btn.addEventListener('click', () => {
-    mesAtual.setMonth(mesAtual.getMonth() + Number(btn.dataset.mes));
+    // sempre no dia 1: somar meses a partir do dia 31 pularia um mês
+    mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + Number(btn.dataset.mes), 1);
     atualizarMes();
   });
 });
@@ -167,7 +177,11 @@ function abrirModal(id, titulo) {
   mostrarMsg(modal.querySelector('.msg'), '');
 
   const data = form.querySelector('[name="data_transacao"]');
-  if (data) data.value = new Date().toISOString().slice(0, 10);
+  if (data) {
+    // data de hoje no fuso local (toISOString usaria UTC e viraria "amanhã" depois das 21h no Brasil)
+    const hoje = new Date();
+    data.value = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+  }
 
   atualizarTipo(form);
   modal.showModal();
@@ -192,7 +206,7 @@ function atualizarTipo(form) {
   }
 
   const limite = document.getElementById('campo-limite');
-  if (limite && form.id === 'form-categoria') {
+  if (limite && form.getAttribute('id') === 'form-categoria') {
     limite.hidden = tipo === 'entrada';
     if (tipo === 'entrada') form.querySelector('[name="limite_mensal"]').value = '';
   }
@@ -219,13 +233,17 @@ document.addEventListener('click', async e => {
     const nome = linha.querySelector('.descricao, .nome')?.textContent.trim() || '';
     const ok = await confirmar({
       titulo: ehCategoria ? 'Excluir categoria?' : 'Excluir transação?',
-      texto: (nome ? '"' + nome + '" será apagada. ' : '') + 'Essa ação não pode ser desfeita.',
+      texto: (nome ? '"' + nome + '" será excluída. ' : '') + 'Essa ação não pode ser desfeita.',
       acao: 'Excluir',
     });
     if (!ok) return;
     // INTEGRAR: fetch DELETE para a API com o id. Só remover a linha se a resposta for ok.
     // Se der erro (ex.: categoria com transações): notificar({ titulo: 'Não foi possível excluir', descricao: mensagemDaApi, status: 'erro' })
+    // o foco vai para a linha vizinha (ou para o botão "Nova…"), senão voltaria ao topo da página
+    const vizinha = [linha.nextElementSibling, linha.previousElementSibling].find(v => v?.matches('[data-id]'));
+    const alvo = vizinha?.querySelector('[data-excluir]') || document.querySelector('[data-abrir]');
     linha.remove();
+    alvo?.focus();
     notificar({ titulo: ehCategoria ? 'Categoria excluída' : 'Transação excluída', descricao: nome });
   }
 });
@@ -256,12 +274,12 @@ document.querySelectorAll('dialog form').forEach(form => {
     const msg = form.querySelector('.msg');
     const dados = Object.fromEntries(new FormData(form));
 
-    if (form.id === 'form-transacao') {
+    if (form.getAttribute('id') === 'form-transacao') {
       if (!dados.id_categoria) return mostrarMsg(msg, 'Escolha uma categoria.');
       if (!(Number(dados.valor) > 0)) return mostrarMsg(msg, 'Informe um valor maior que zero.');
       if (!dados.data_transacao) return mostrarMsg(msg, 'Informe a data.');
     }
-    if (form.id === 'form-categoria') {
+    if (form.getAttribute('id') === 'form-categoria') {
       if (!dados.nome.trim()) return mostrarMsg(msg, 'Dê um nome para a categoria.');
     }
 
@@ -269,7 +287,7 @@ document.querySelectorAll('dialog form').forEach(form => {
     // Erro da API -> mostrarMsg(msg, textoDoErro) e manter o modal aberto. Sucesso -> fechar e notificar (abaixo).
     console.log('enviar para a API:', dados);
     form.closest('dialog').close();
-    const oQue = form.id === 'form-categoria' ? 'Categoria' : 'Transação';
+    const oQue = form.getAttribute('id') === 'form-categoria' ? 'Categoria' : 'Transação';
     notificar({ titulo: oQue + (dados.id ? ' atualizada' : ' criada'), descricao: dados.nome || dados.descricao || '' });
   });
 });
@@ -277,19 +295,23 @@ document.querySelectorAll('dialog form').forEach(form => {
 // ---------- abas de tipo (transacoes.php) ----------
 document.querySelectorAll('.abas button').forEach(btn => {
   btn.addEventListener('click', () => {
-    btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('ativo'));
-    btn.classList.add('ativo');
+    btn.parentElement.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('ativo', b === btn);
+      b.setAttribute('aria-pressed', String(b === btn));
+    });
     // INTEGRAR: recarregar a lista com ?tipo= btn.dataset.tipo
   });
 });
 
 // ---------- mostrar senha (login e cadastro) ----------
 document.querySelectorAll('[data-mostrar-senha]').forEach(caixa => {
-  caixa.addEventListener('change', () => {
+  const sincronizar = () => {
     caixa.closest('form').querySelectorAll('[name="senha"], [name="confirmar"]').forEach(campo => {
       campo.type = caixa.checked ? 'text' : 'password';
     });
-  });
+  };
+  caixa.addEventListener('change', sincronizar);
+  window.addEventListener('pageshow', sincronizar); // o navegador pode restaurar a caixa marcada ao voltar
 });
 
 // ---------- login ----------
@@ -300,6 +322,7 @@ if (formLogin) {
     const msg = document.getElementById('msg-login');
     const dados = Object.fromEntries(new FormData(formLogin));
     if (!dados.email || !dados.senha) return mostrarMsg(msg, 'Preencha e-mail e senha.');
+    if (!formLogin.querySelector('[name="email"]').checkValidity()) return mostrarMsg(msg, 'Informe um e-mail válido.');
     // INTEGRAR: POST API + 'login.php' -> se ok: window.location = 'logado/dashboard.php'
     window.location = 'logado/dashboard.php';
   });
@@ -313,6 +336,7 @@ if (formCadastro) {
     const msg = document.getElementById('msg-cadastro');
     const dados = Object.fromEntries(new FormData(formCadastro));
     if (!dados.nome.trim() || !dados.email || !dados.senha) return mostrarMsg(msg, 'Preencha todos os campos.');
+    if (!formCadastro.querySelector('[name="email"]').checkValidity()) return mostrarMsg(msg, 'Informe um e-mail válido.');
     if (dados.senha.length < 6) return mostrarMsg(msg, 'A senha precisa ter pelo menos 6 caracteres.');
     if (dados.senha !== dados.confirmar) return mostrarMsg(msg, 'As senhas não conferem.');
     delete dados.confirmar;
@@ -360,6 +384,12 @@ function desenharGrafico(semanas, animar = true) {
   el._largura = el.clientWidth;
   el.classList.remove('ativo');
   el.replaceChildren();
+  // limpa o que o desenho anterior deixou (importa quando o mês novo não tem dados)
+  el.onpointermove = el.onpointerdown = el.onpointerleave = el.onfocus = el.onblur = el.onkeydown = null;
+  el._esconder = null;
+  el.removeAttribute('tabindex');
+  el.removeAttribute('role');
+  el.removeAttribute('aria-label');
 
   const maximo = Math.max(0, ...semanas.flatMap(s => [s.entradas, s.saidas]));
   if (!maximo) {
@@ -473,11 +503,12 @@ function desenharGrafico(semanas, animar = true) {
       cartao.append(item);
     });
 
-    // cartão acima do ponto mais alto; se não couber, abaixo do mais baixo
+    // cartão acima do ponto mais alto; se não couber, ao lado da guia, sem sair da área do gráfico
     const cl = cartao.offsetWidth, ca = cartao.offsetHeight;
     const acima = Math.min(...ys) - 15 - ca;
-    const topo = acima >= -8 ? acima : Math.max(...ys) + 15;
-    const esquerda = px < L / 2 ? px - 13 : px + 13 - cl;
+    const cabe = acima >= -8;
+    const topo = cabe ? acima : Math.max(0, Math.min(Math.max(...ys) + 15, A - borda.base - ca));
+    const esquerda = cabe ? (px < L / 2 ? px - 13 : px + 13 - cl) : (px < L / 2 ? px + 16 : px - 16 - cl);
     cartao.style.top = topo + 'px';
     cartao.style.left = Math.min(Math.max(esquerda, 0), L - cl) + 'px';
     el.classList.add('ativo');
@@ -495,7 +526,9 @@ function desenharGrafico(semanas, animar = true) {
 
   el.onpointermove = e => mostrar(maisProximo(e.clientX));
   el.onpointerdown = e => mostrar(maisProximo(e.clientX));
-  el.onpointerleave = () => mostrar(-1);
+  // no toque o navegador dispara pointerleave ao levantar o dedo: aí o cartão fica até tocar fora
+  el.onpointerleave = e => { if (e.pointerType !== 'touch') mostrar(-1); };
+  el._esconder = () => mostrar(-1);
   // teclado: Tab foca o gráfico, setas mudam de semana
   el.tabIndex = 0;
   el.setAttribute('role', 'group');
@@ -537,6 +570,7 @@ if (grafico) {
   let semanasIniciais = [];
   try { semanasIniciais = JSON.parse(grafico.dataset.semanas || '[]'); } catch (erro) { console.error('data-semanas inválido em #grafico', erro); }
   desenharGrafico(semanasIniciais);
+  document.addEventListener('pointerdown', e => { if (!grafico.contains(e.target)) grafico._esconder?.(); });
   // redesenha (sem animação) quando a largura muda
   new ResizeObserver(() => {
     if (grafico.clientWidth !== grafico._largura) desenharGrafico(grafico._semanas, false);
