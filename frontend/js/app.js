@@ -142,7 +142,13 @@ if (nomeUsuario) {
 }
 
 // ---------- seletor de mês ----------
-let mesAtual = new Date(2026, 10, 1); // nov/2026 (mês começa em 0). Trocar por new Date() depois.
+let mesAtual = new Date();   // começa no mês de hoje
+mesAtual.setDate(1);         // sempre no dia 1, para somar meses sem erro
+
+// mês no formato que a API espera, ex.: "2026-11"
+function mesParaApi() {
+  return mesAtual.getFullYear() + '-' + String(mesAtual.getMonth() + 1).padStart(2, '0');
+}
 
 function atualizarMes() {
   const span = document.getElementById('mes-atual');
@@ -150,8 +156,8 @@ function atualizarMes() {
   const abrev = MESES[mesAtual.getMonth()].slice(0, 3);
   if (span) span.textContent = abrev[0].toUpperCase() + abrev.slice(1) + ' ' + mesAtual.getFullYear();
   if (nome) nome.textContent = MESES[mesAtual.getMonth()];
-  // INTEGRAR: recarregar os dados do mês. Formato sugerido: "2026-11"
-  // const mes = mesAtual.toISOString().slice(0, 7);
+  carregarTransacoes();   // recarrega a lista do mês escolhido (página de transações)
+  carregarDashboard();    // recarrega o resumo do mês (página do dashboard)
 }
 
 document.querySelectorAll('[data-mes]').forEach(btn => {
@@ -226,7 +232,24 @@ document.addEventListener('click', async e => {
     abrirModal(ehCategoria ? 'modal-categoria' : 'modal-transacao',
       ehCategoria ? 'Editar categoria' : 'Editar transação');
     document.querySelector('dialog[open] [name="id"]').value = linha.dataset.id;
-    // INTEGRAR: buscar o registro pelo id (GET ...?id=) e preencher os campos do form
+    if (ehCategoria) {
+      // os dados já foram carregados na lista (variável categorias): é só preencher o formulário
+      const c = categorias.find(c => c.id == linha.dataset.id);
+      const form = document.getElementById('form-categoria');
+      form.nome.value = c.nome;
+      form.tipo.value = c.tipo;
+      form.limite_mensal.value = c.limite_mensal || '';
+      atualizarTipo(form);
+    } else {
+      const t = transacoes.find(t => t.id == linha.dataset.id);
+      const form = document.getElementById('form-transacao');
+      form.tipo.value = t.tipo;
+      atualizarTipo(form);               // primeiro o tipo: ele filtra as categorias do select
+      form.id_categoria.value = t.id_categoria;
+      form.descricao.value = t.descricao || '';
+      form.valor.value = t.valor;
+      form.data_transacao.value = t.data_transacao;
+    }
   }
 
   if (e.target.matches('[data-excluir]')) {
@@ -237,8 +260,18 @@ document.addEventListener('click', async e => {
       acao: 'Excluir',
     });
     if (!ok) return;
-    // INTEGRAR: fetch DELETE para a API com o id. Só remover a linha se a resposta for ok.
-    // Se der erro (ex.: categoria com transações): notificar({ titulo: 'Não foi possível excluir', descricao: mensagemDaApi, status: 'erro' })
+    const arquivoApi = ehCategoria ? 'categorias.php' : 'transacoes.php';
+    const resposta = await fetch(API + arquivoApi + '?id=' + linha.dataset.id, { method: 'DELETE' });
+    if (!resposta.ok) {
+      // ex.: categoria que ainda tem transações
+      const resultado = await resposta.json();
+      return notificar({ titulo: 'Não foi possível excluir', descricao: resultado.erro, status: 'erro' });
+    }
+    if (!ehCategoria) {
+      transacoes = transacoes.filter(t => t.id != linha.dataset.id);   // tira da lista e refaz os totais
+      mostrarTotais();
+      carregarDashboard();
+    }
     // o foco vai para a linha vizinha (ou para o botão "Nova…"), senão voltaria ao topo da página
     const vizinha = [linha.nextElementSibling, linha.previousElementSibling].find(v => v?.matches('[data-id]'));
     const alvo = vizinha?.querySelector('[data-excluir]') || document.querySelector('[data-abrir]');
@@ -269,7 +302,7 @@ ligarContador('qtd-entradas', 'lista-entradas', String);
 
 // ---------- envio dos formulários dos modais ----------
 document.querySelectorAll('dialog form').forEach(form => {
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const msg = form.querySelector('.msg');
     const dados = Object.fromEntries(new FormData(form));
@@ -283,9 +316,22 @@ document.querySelectorAll('dialog form').forEach(form => {
       if (!dados.nome.trim()) return mostrarMsg(msg, 'Dê um nome para a categoria.');
     }
 
-    // INTEGRAR: fetch(url, { method: dados.id ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(dados) })
-    // Erro da API -> mostrarMsg(msg, textoDoErro) e manter o modal aberto. Sucesso -> fechar e notificar (abaixo).
-    console.log('enviar para a API:', dados);
+    // com id é edição (PUT); sem id é registro novo (POST)
+    const ehCategoria = form.getAttribute('id') === 'form-categoria';
+    const resposta = await fetch(API + (ehCategoria ? 'categorias.php' : 'transacoes.php'), {
+      method: dados.id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    });
+    const resultado = await resposta.json();
+    if (!resposta.ok) return mostrarMsg(msg, resultado.erro);   // erro: o modal continua aberto
+    // recarrega o que está na tela
+    if (ehCategoria) {
+      carregarCategorias();
+    } else {
+      carregarTransacoes();
+      carregarDashboard();
+    }
     form.closest('dialog').close();
     const oQue = form.getAttribute('id') === 'form-categoria' ? 'Categoria' : 'Transação';
     notificar({ titulo: oQue + (dados.id ? ' atualizada' : ' criada'), descricao: dados.nome || dados.descricao || '' });
@@ -299,7 +345,7 @@ document.querySelectorAll('.abas button').forEach(btn => {
       b.classList.toggle('ativo', b === btn);
       b.setAttribute('aria-pressed', String(b === btn));
     });
-    // INTEGRAR: recarregar a lista com ?tipo= btn.dataset.tipo
+    carregarTransacoes();   // recarrega a lista (ela lê qual aba está ativa)
   });
 });
 
@@ -317,13 +363,20 @@ document.querySelectorAll('[data-mostrar-senha]').forEach(caixa => {
 // ---------- login ----------
 const formLogin = document.getElementById('form-login');
 if (formLogin) {
-  formLogin.addEventListener('submit', e => {
+  formLogin.addEventListener('submit', async e => {
     e.preventDefault();
     const msg = document.getElementById('msg-login');
     const dados = Object.fromEntries(new FormData(formLogin));
     if (!dados.email || !dados.senha) return mostrarMsg(msg, 'Preencha e-mail e senha.');
     if (!formLogin.querySelector('[name="email"]').checkValidity()) return mostrarMsg(msg, 'Informe um e-mail válido.');
-    // INTEGRAR: POST API + 'login.php' -> se ok: window.location = 'logado/dashboard.php'
+    // manda e-mail e senha para o PHP; se der certo, vai para o dashboard
+    const resposta = await fetch(API + 'login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    });
+    const resultado = await resposta.json();
+    if (!resposta.ok) return mostrarMsg(msg, resultado.erro);
     window.location = 'logado/dashboard.php';
   });
 }
@@ -331,7 +384,7 @@ if (formLogin) {
 // ---------- cadastro ----------
 const formCadastro = document.getElementById('form-cadastro');
 if (formCadastro) {
-  formCadastro.addEventListener('submit', e => {
+  formCadastro.addEventListener('submit', async e => {
     e.preventDefault();
     const msg = document.getElementById('msg-cadastro');
     const dados = Object.fromEntries(new FormData(formCadastro));
@@ -340,7 +393,14 @@ if (formCadastro) {
     if (dados.senha.length < 6) return mostrarMsg(msg, 'A senha precisa ter pelo menos 6 caracteres.');
     if (dados.senha !== dados.confirmar) return mostrarMsg(msg, 'As senhas não conferem.');
     delete dados.confirmar;
-    // INTEGRAR: POST API + 'cadastro.php' com { nome, email, senha }
+    // manda os dados para o PHP e espera a resposta
+    const resposta = await fetch(API + 'cadastro.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    });
+    const resultado = await resposta.json();
+    if (!resposta.ok) return mostrarMsg(msg, resultado.erro);
     mostrarMsg(msg, 'Conta criada. Agora é só entrar.', 'ok');
     setTimeout(() => { window.location = 'index.html'; }, 1200);
   });
@@ -577,4 +637,238 @@ if (grafico) {
   }).observe(grafico);
 }
 
+// ==========================================================
+// Categorias (lista em categorias.php e opções dos selects de transação)
+// ==========================================================
+let categorias = [];   // guarda a lista para preencher o modal na hora de editar
+
+function criarLinhaCategoria(c) {
+  const linha = document.createElement('div');
+  linha.className = 'categoria-linha';
+  linha.dataset.id = c.id;
+  linha.innerHTML =
+    '<span class="nome"></span>' +
+    (c.tipo === 'saida' ? '<span class="num mudo"></span>' : '') +
+    '<span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>';
+  // textContent (e não innerHTML) para o nome nunca ser lido como HTML
+  linha.querySelector('.nome').textContent = c.nome;
+  if (c.tipo === 'saida') {
+    linha.querySelector('.num').textContent = c.limite_mensal ? REAIS.format(Number(c.limite_mensal)) : 'Sem limite';
+  }
+  return linha;
+}
+
+async function carregarCategorias() {
+  const listaSaidas = document.getElementById('lista-saidas');
+  const listaEntradas = document.getElementById('lista-entradas');
+  const selectModal = document.getElementById('t-categoria');
+  const filtro = document.getElementById('filtro-categoria');
+  if (!listaSaidas && !selectModal && !filtro) return;   // página que não usa categorias (login, cadastro)
+
+  const resposta = await fetch(API + 'categorias.php');
+  categorias = await resposta.json();
+
+  // página de categorias: monta as duas listas
+  if (listaSaidas && listaEntradas) {
+    listaSaidas.replaceChildren();
+    listaEntradas.replaceChildren();
+    categorias.forEach(c => {
+      (c.tipo === 'saida' ? listaSaidas : listaEntradas).append(criarLinhaCategoria(c));
+    });
+  }
+
+  // formulário de transação: opções do select (o data-tipo serve para filtrar entrada/saída)
+  if (selectModal) {
+    selectModal.replaceChildren(new Option('Selecione...', ''));
+    categorias.forEach(c => {
+      const opcao = new Option(c.nome, c.id);
+      opcao.dataset.tipo = c.tipo;
+      selectModal.append(opcao);
+    });
+  }
+
+  // filtro da página de transações
+  if (filtro) {
+    filtro.replaceChildren(new Option('Todas as categorias', ''));
+    categorias.forEach(c => filtro.append(new Option(c.nome, c.id)));
+  }
+}
+carregarCategorias();
+
+// ==========================================================
+// Transações (lista em transacoes.php)
+// ==========================================================
+let transacoes = [];   // lista que está na tela: usada ao editar e para somar os totais
+
+function criarLinhaTransacao(t) {
+  const [ano, mes, dia] = t.data_transacao.split('-');
+  const ehEntrada = t.tipo === 'entrada';
+
+  const linha = document.createElement('div');
+  linha.className = 'lista-linha';
+  linha.dataset.id = t.id;
+  linha.innerHTML =
+    '<span class="rotulo num"></span><span class="descricao"></span><span class="cat mudo"></span><span class="valor num"></span>' +
+    '<span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>';
+  // textContent (e não innerHTML) para o texto nunca ser lido como HTML
+  linha.querySelector('.rotulo').textContent = dia + ' ' + MESES[Number(mes) - 1].slice(0, 3);
+  linha.querySelector('.descricao').textContent = t.descricao || '';
+  linha.querySelector('.cat').textContent = t.categoria;
+  const valor = linha.querySelector('.valor');
+  valor.classList.add(ehEntrada ? 'entrada' : 'saida');
+  valor.textContent = (ehEntrada ? '+ ' : '− ') + REAIS.format(Number(t.valor));
+  return linha;
+}
+
+// soma as transações que estão na tela e mostra Entrou / Saiu / Saldo
+function mostrarTotais() {
+  const lista = document.getElementById('lista-transacoes');
+  if (!lista) return;   // só existe na página de transações
+
+  let entradas = 0, saidas = 0;
+  transacoes.forEach(t => {
+    if (t.tipo === 'entrada') entradas += Number(t.valor);
+    else saidas += Number(t.valor);
+  });
+  document.getElementById('total-entradas').textContent = REAIS.format(entradas);
+  document.getElementById('total-saidas').textContent = REAIS.format(saidas);
+  document.getElementById('saldo').textContent = REAIS.format(entradas - saidas);
+
+  // sem transações: esconde a lista e mostra a mensagem "Nenhuma transação"
+  lista.hidden = transacoes.length === 0;
+  document.getElementById('sem-transacoes').hidden = transacoes.length > 0;
+}
+
+async function carregarTransacoes() {
+  const lista = document.getElementById('lista-transacoes');
+  if (!lista) return;   // não é a página de transações
+
+  // lê os filtros da tela: mês, aba (todas/entradas/saídas) e categoria
+  const tipo = document.querySelector('.abas .ativo')?.dataset.tipo || '';
+  const categoria = document.getElementById('filtro-categoria').value;
+  const url = API + 'transacoes.php?mes=' + mesParaApi() + '&tipo=' + tipo + '&categoria=' + categoria;
+
+  const resposta = await fetch(url);
+  transacoes = await resposta.json();
+
+  lista.replaceChildren(...transacoes.map(criarLinhaTransacao));
+  mostrarTotais();
+}
+document.getElementById('filtro-categoria')?.addEventListener('change', carregarTransacoes);
+
+// ==========================================================
+// Dashboard (só roda em dashboard.php): resumo do mês vindo de api/dashboard.php
+// ==========================================================
+const REAIS_INTEIRO = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const NUMERO_INTEIRO = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+
+function porcentagem(parte, total) {
+  return total > 0 ? Math.round(parte / total * 100) : 0;
+}
+
+// uma barra da lista "Limites por categoria"
+function criarBarraLimite(c) {
+  const gasto = Number(c.gasto);
+  const limite = Number(c.limite_mensal);
+  const usado = limite > 0 ? gasto / limite : (gasto > 0 ? 1 : 0);   // 1 = 100% do limite
+  const estourou = gasto > limite;
+
+  const barra = document.createElement('div');
+  barra.className = 'orcamento' + (estourou ? ' estourou' : usado >= 0.8 ? ' atencao' : '');
+  barra.setAttribute('role', 'meter');
+  barra.setAttribute('aria-label', c.nome);
+  barra.setAttribute('aria-valuemin', 0);
+  barra.setAttribute('aria-valuemax', limite);
+  barra.setAttribute('aria-valuenow', Math.min(gasto, limite));
+  barra.setAttribute('aria-valuetext', REAIS_INTEIRO.format(gasto) + ' de ' + REAIS_INTEIRO.format(limite) + (estourou ? ', acima do limite' : ''));
+  barra.innerHTML = '<div class="orcamento-topo"><span></span><span class="num"></span></div><div class="trilho"><div></div></div>';
+  barra.querySelector('.orcamento-topo span').textContent = c.nome;
+  barra.querySelector('.num').textContent = NUMERO_INTEIRO.format(gasto) + ' / ' + NUMERO_INTEIRO.format(limite);
+  barra.querySelector('.trilho div').style.setProperty('--p', Math.min(usado, 1) * 100 + '%');
+  if (estourou) {
+    const nota = document.createElement('span');
+    nota.className = 'orcamento-nota';
+    nota.textContent = REAIS.format(gasto - limite) + ' acima do limite';
+    barra.append(nota);
+  }
+  return barra;
+}
+
+// mensagem de "lista vazia"
+function criarVazio(texto) {
+  const vazio = document.createElement('div');
+  vazio.className = 'vazio';
+  vazio.textContent = texto;
+  return vazio;
+}
+
+async function carregarDashboard() {
+  if (!document.getElementById('lista-gastos')) return;   // não é a página do dashboard
+
+  const resposta = await fetch(API + 'dashboard.php?mes=' + mesParaApi());
+  const d = await resposta.json();
+  const entradas = Number(d.entradas);
+  const saidas = Number(d.saidas);
+  const saldo = entradas - saidas;
+
+  // saldo grande, com os centavos em tamanho menor
+  const [inteiro, centavos] = REAIS.format(saldo).split(',');
+  const elSaldo = document.getElementById('saldo');
+  elSaldo.textContent = inteiro;
+  const spanCentavos = document.createElement('span');
+  spanCentavos.className = 'centavos';
+  spanCentavos.textContent = ',' + centavos;
+  elSaldo.append(spanCentavos);
+
+  // frase embaixo do saldo
+  let frase = 'Nenhuma movimentação neste mês.';
+  if (entradas === 0 && saidas > 0) frase = 'Neste mês só houve saídas.';
+  else if (saldo >= 0 && entradas > 0) frase = 'Sobrou ' + porcentagem(saldo, entradas) + '% do que entrou neste mês.';
+  else if (saldo < 0) frase = 'Gastou ' + porcentagem(-saldo, entradas) + '% a mais do que entrou neste mês.';
+  document.getElementById('saldo-frase').textContent = frase;
+
+  document.getElementById('total-entradas').textContent = REAIS.format(entradas);
+  document.getElementById('total-saidas').textContent = REAIS.format(saidas);
+
+  // categorias de saída que tiveram gasto (a API já manda da maior para a menor)
+  const gastos = d.categorias.filter(c => Number(c.gasto) > 0);
+
+  // maior gasto
+  document.getElementById('maior-categoria').textContent = gastos.length ? gastos[0].nome : '—';
+  document.getElementById('maior-categoria-parte').textContent = gastos.length ? porcentagem(Number(gastos[0].gasto), saidas) + '% das saídas' : '';
+
+  // gráfico de entradas e saídas por semana
+  desenharGrafico(d.semanas);
+
+  // gastos por categoria
+  const listaGastos = document.getElementById('lista-gastos');
+  listaGastos.replaceChildren(...gastos.map(c => {
+    const parte = porcentagem(Number(c.gasto), saidas);
+    const linha = document.createElement('div');
+    linha.className = 'barra-linha';
+    linha.setAttribute('role', 'listitem');
+    linha.style.setProperty('--p', parte + '%');
+    linha.innerHTML = '<span class="nome"></span><span class="num valor-gasto"></span><span class="num parte"></span>';
+    linha.querySelector('.nome').textContent = c.nome;
+    linha.querySelector('.valor-gasto').textContent = REAIS.format(Number(c.gasto));
+    linha.querySelector('.parte').textContent = parte + '%';
+    return linha;
+  }));
+  listaGastos.hidden = gastos.length === 0;
+  document.getElementById('sem-gastos').hidden = gastos.length > 0;
+
+  // limites: só as categorias de saída que têm limite
+  const comLimite = d.categorias.filter(c => c.limite_mensal !== null);
+  const listaLimites = document.getElementById('lista-limites');
+  listaLimites.replaceChildren(...comLimite.map(criarBarraLimite));
+  if (comLimite.length === 0) listaLimites.append(criarVazio('Nenhuma categoria de saída com limite.'));
+
+  // últimas transações (o botão Editar procura nesta lista)
+  transacoes = d.ultimas;
+  const listaUltimas = document.getElementById('ultimas-transacoes');
+  listaUltimas.replaceChildren(...d.ultimas.map(criarLinhaTransacao));
+  if (d.ultimas.length === 0) listaUltimas.append(criarVazio('Nenhuma transação neste mês.'));
+}
+
+// começa tudo: escreve o mês na tela e carrega os dados dele
 atualizarMes();

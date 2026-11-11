@@ -29,7 +29,7 @@
     <div class="usuario">
       <span class="avatar" data-avatar-usuario aria-hidden="true"></span>
       <div class="usuario-texto">
-        <strong id="nome-usuario">Nome do usuário</strong>
+        <strong id="nome-usuario"><?= htmlspecialchars($_SESSION['nome']) ?></strong>
         <a href="../../api/logout.php">Sair</a>
       </div>
     </div>
@@ -63,42 +63,18 @@
 
       <div>
         <div class="secao-topo">
-          <h2><i class="marca-cor cor-saida" aria-hidden="true"></i>Saídas <span class="contador" id="qtd-saidas">4</span></h2>
+          <h2><i class="marca-cor cor-saida" aria-hidden="true"></i>Saídas <span class="contador" id="qtd-saidas">0</span></h2>
           <span class="rotulo cabecalho-limite">Limite mensal</span>
         </div>
         <div id="lista-saidas">
-          <div class="categoria-linha" data-id="3">
-            <span class="nome">Aluguel</span><span class="num mudo">R$ 1.200,00</span>
-            <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
-          </div>
-          <div class="categoria-linha" data-id="4">
-            <span class="nome">Alimentação</span><span class="num mudo">R$ 600,00</span>
-            <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
-          </div>
-          <div class="categoria-linha" data-id="5">
-            <span class="nome">Transporte</span><span class="num mudo">R$ 250,00</span>
-            <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
-          </div>
-          <div class="categoria-linha" data-id="6">
-            <span class="nome">Lazer</span><span class="num mudo">R$ 150,00</span>
-            <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
-          </div>
         </div>
       </div>
 
       <div>
         <div class="secao-topo">
-          <h2><i class="marca-cor cor-entrada" aria-hidden="true"></i>Entradas <span class="contador" id="qtd-entradas">2</span></h2>
+          <h2><i class="marca-cor cor-entrada" aria-hidden="true"></i>Entradas <span class="contador" id="qtd-entradas">0</span></h2>
         </div>
         <div id="lista-entradas">
-          <div class="categoria-linha" data-id="1">
-            <span class="nome">Salário</span>
-            <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
-          </div>
-          <div class="categoria-linha" data-id="2">
-            <span class="nome">Bolsa estágio</span>
-            <span class="acoes"><button class="btn-texto" data-editar>Editar</button><button class="btn-texto perigo" data-excluir>Excluir</button></span>
-          </div>
         </div>
       </div>
 
