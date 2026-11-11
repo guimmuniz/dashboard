@@ -51,6 +51,10 @@
   --aviso: #F0B100;
   --info-fundo: var(--acento-100);
 
+  /* radar de ações: subiu / caiu (tons escuros para o texto ter contraste no fundo branco) */
+  --alta: #2E7D0F;
+  --baixa: var(--erro);
+
   /* séries do gráfico (par validado para daltonismo e contraste) */
   --serie-entrada: #155DFC;
   --serie-saida: #E17100;
@@ -684,6 +688,95 @@ input:focus, select:focus { outline: none; border-color: var(--acento-500); box-
 .marca-cor { display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; vertical-align: middle; }
 .contador { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: var(--fundo-ativo); color: var(--texto-2); font-family: var(--fonte); font-size: 12px; font-weight: 500; line-height: 16px; letter-spacing: 0; word-spacing: normal; vertical-align: middle; font-variant-numeric: tabular-nums; }
 .cabecalho-limite { margin-right: 132px; }
+
+/* ---------- radar.php: radar e carteira ---------- */
+
+/* cores de subiu / caiu (usadas no radar, na carteira e nos totais) */
+.alta { color: var(--alta); font-weight: 500; }
+.baixa { color: var(--baixa); font-weight: 500; }
+
+/* cabeçalhos das listas (mesmo visual de .lista-cabecalho) */
+.radar-cabecalho, .carteira-cabecalho { margin: 0 -12px; padding: 8px 12px; border-radius: 8px; background: var(--faixa); color: var(--texto-2); font-weight: 500; }
+
+/* linhas das listas (mesmo visual de .lista-linha) */
+.radar-linha, .carteira-linha {
+  padding: 14px 12px;
+  margin: 0 -12px;
+  border-top: 1px solid var(--linha);
+  font-size: 14px;
+  transition: background-color .15s ease;
+}
+.radar-linha:hover, .carteira-linha:hover { background: var(--fundo-hover); }
+.radar-linha:last-child, .carteira-linha:last-child { border-bottom: 1px solid var(--linha); }
+.radar-cabecalho + div > .radar-linha:first-child,
+.carteira-cabecalho + div > .carteira-linha:first-child { border-top-color: transparent; }
+
+/* mercado como etiqueta neutra, igual à categoria na lista de transações */
+.carteira-linha .cat { padding: 2px 8px; border-radius: 6px; background: var(--fundo-ativo); color: var(--texto-2); font-size: 12px; font-weight: 500; line-height: 16px; }
+.radar-linha .acoes, .carteira-linha .acoes { justify-content: flex-end; margin-left: 0; }
+
+/* radar: Ação · Preço · Variação · Atualização · botão */
+.radar-mercado { margin: 24px 0 10px; font-family: var(--fonte); font-size: 14px; font-weight: 600; color: var(--texto-2); word-spacing: normal; }
+.radar-cabecalho, .radar-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 120px 200px 150px;
+  align-items: center;
+  gap: 16px;
+}
+.radar-cabecalho span:nth-child(2), .radar-cabecalho span:nth-child(3) { text-align: right; }
+.radar-linha .nome { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.radar-linha .preco, .radar-linha .variacao { text-align: right; white-space: nowrap; }
+.radar-linha .preco { font-weight: 500; }
+.radar-linha .quando { font-size: 13px; }
+.radar-linha .quando .selo { margin-left: 4px; background: #FEF3C7; color: #92400E; }
+.radar-linha .acoes { opacity: 1; }   /* o link "Adicionar à carteira" fica sempre visível */
+/* o "Adicionar à carteira" do radar é um link (leva para a carteira) com cara de botão */
+a.btn-texto { display: inline-flex; align-items: center; text-decoration: none; }
+/* busca do radar */
+.radar-busca { width: min(320px, 100%); height: 36px; }
+
+/* carteira: totais por moeda (um bloco para R$ e outro para US$) */
+.carteira-totais { align-items: flex-end; margin-top: 8px; padding-bottom: 16px; }
+.carteira-totais-titulo { flex-basis: 100%; font-size: 13px; font-weight: 600; color: var(--texto-2); }
+
+/* carteira: Ação · Qtd. · Preço médio · Preço atual · Valor atual · Resultado · ações */
+.carteira-cabecalho, .carteira-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 110px 110px 120px 170px 116px;
+  align-items: center;
+  gap: 16px;
+}
+.carteira-cabecalho span:nth-child(n+2):nth-child(-n+6) { text-align: right; }
+.carteira-linha .num { text-align: right; white-space: nowrap; }
+.carteira-linha .ticker { font-weight: 600; }
+.carteira-linha .nome { min-width: 0; }
+.carteira-linha:hover .acoes, .carteira-linha:focus-within .acoes { opacity: 1; }
+
+/* tela média: no radar, a "Atualização" e o botão descem para uma segunda linha;
+   na carteira, o cabeçalho some e cada valor mostra o próprio nome em cima (data-rotulo) */
+@media (max-width: 1100px) {
+  .radar-cabecalho, .radar-linha { grid-template-columns: minmax(0, 1fr) 110px 110px; }
+  .radar-cabecalho span:nth-child(4), .radar-cabecalho span:nth-child(5) { display: none; }
+  .radar-linha .quando { grid-column: 1 / 2; }
+  .radar-linha .acoes { grid-column: 2 / -1; }
+
+  .carteira-cabecalho { display: none; }
+  .carteira-linha { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; align-items: start; }
+  .carteira-linha .num { text-align: left; white-space: normal; }
+  .carteira-linha [data-rotulo]::before { content: attr(data-rotulo); display: block; margin-bottom: 2px; font-size: 12px; color: var(--texto-3); }
+  .carteira-linha .acoes { grid-column: 1 / -1; opacity: 1; justify-content: flex-start; margin-left: -8px; }
+}
+
+/* celular: duas colunas */
+@media (max-width: 520px) {
+  .radar-cabecalho { display: none; }
+  .radar-linha { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+  .radar-linha .nome { grid-row: span 2; }   /* preço e variação ficam um embaixo do outro, à direita */
+  .radar-linha .quando { grid-column: 1 / -1; }
+  .radar-linha .acoes { grid-column: 1 / -1; justify-content: flex-start; margin-left: -8px; }
+  .carteira-linha { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .carteira-linha .nome { grid-column: 1 / -1; }
+}
 
 /* ---------- modal (<dialog>) ---------- */
 

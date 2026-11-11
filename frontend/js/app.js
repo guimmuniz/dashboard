@@ -301,7 +301,8 @@ ligarContador('qtd-saidas', 'lista-saidas', String);
 ligarContador('qtd-entradas', 'lista-entradas', String);
 
 // ---------- envio dos formulários dos modais ----------
-document.querySelectorAll('dialog form').forEach(form => {
+// (o formulário da carteira tem o próprio envio, lá embaixo na parte do Radar e carteira)
+document.querySelectorAll('dialog form:not(#form-carteira)').forEach(form => {
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const msg = form.querySelector('.msg');
@@ -869,6 +870,356 @@ async function carregarDashboard() {
   listaUltimas.replaceChildren(...d.ultimas.map(criarLinhaTransacao));
   if (d.ultimas.length === 0) listaUltimas.append(criarVazio('Nenhuma transação neste mês.'));
 }
+
+// ==========================================================
+// Radar e carteira (só roda em radar.php)
+// Radar: lista fixa de ações vinda de api/radar.php (só consulta).
+// Carteira: ações do usuário, com CRUD em api/carteira.php.
+// Quem fala com a brapi e a Finnhub é o PHP; o navegador só conversa com a nossa API
+// (assim as chaves das APIs nunca aparecem aqui).
+// ==========================================================
+
+// moeda de cada mercado: B3 em reais, EUA em dólares
+const MOEDA_DO_MERCADO = { B3: 'BRL', US: 'USD' };
+
+// 1234.5 + 'B3' -> "R$ 1.234,50"   |   1234.5 + 'US' -> "US$ 1.234,50"
+function formatarDinheiro(valor, mercado) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: MOEDA_DO_MERCADO[mercado] }).format(valor);
+}
+
+// -1.96 -> "1,96%" (sem o sinal: a seta e o + / − são colocados por mostrarAltaBaixa)
+function formatarPorcento(numero) {
+  return Math.abs(numero).toFixed(2).replace('.', ',') + '%';
+}
+
+// escreve o texto com seta e cor: ▲ verde quando subiu, ▼ vermelho quando caiu
+function mostrarAltaBaixa(el, numero, texto) {
+  el.classList.remove('alta', 'baixa');
+  if (numero > 0) {
+    el.textContent = '▲ +' + texto;
+    el.classList.add('alta');
+  } else if (numero < 0) {
+    el.textContent = '▼ −' + texto;
+    el.classList.add('baixa');
+  } else {
+    el.textContent = texto;
+  }
+}
+
+// "2026-11-11 16:00:00" -> "Atualizado às 16:00" (hoje) ou "Atualizado às 16:00 de 10/11" (outro dia)
+function formatarAtualizacao(dataHora) {
+  const [data, hora] = dataHora.split(' ');
+  const [ano, mes, dia] = data.split('-');
+  const hoje = new Date();
+  const ehHoje = Number(ano) === hoje.getFullYear() && Number(mes) === hoje.getMonth() + 1 && Number(dia) === hoje.getDate();
+  return 'Atualizado às ' + hora.slice(0, 5) + (ehHoje ? '' : ' de ' + dia + '/' + mes);
+}
+
+// ---------- radar ----------
+function criarLinhaRadar(a) {
+  const linha = document.createElement('div');
+  linha.className = 'radar-linha';
+  linha.dataset.ticker = a.ticker;   // usado pela busca
+  linha.innerHTML =
+    '<span class="nome"></span><span class="preco num"></span><span class="variacao num"></span><span class="quando mudo"></span>' +
+    '<span class="acoes"><a class="btn-texto">Adicionar à carteira</a></span>';
+  // textContent (e não innerHTML) para o texto nunca ser lido como HTML
+  linha.querySelector('.nome').textContent = a.ticker;
+
+  // o link leva para a carteira, que já abre o modal com a ação e o mercado preenchidos
+  linha.querySelector('a').href = 'carteira.php?ticker=' + encodeURIComponent(a.ticker) + '&mercado=' + a.mercado;
+
+  // ação sem nenhuma cotação guardada (a API não respondeu nenhuma vez)
+  const preco = linha.querySelector('.preco');
+  if (a.preco === null) {
+    preco.textContent = 'Sem cotação';
+    preco.classList.add('mudo');
+    return linha;
+  }
+
+  preco.textContent = formatarDinheiro(Number(a.preco), a.mercado);
+  const variacao = Number(a.variacao_percent);
+  mostrarAltaBaixa(linha.querySelector('.variacao'), variacao, formatarPorcento(variacao));
+
+  // quando foi atualizada. Se a API falhou, o PHP manda o último valor guardado
+  // com desatualizada = true, e a linha ganha um selo avisando.
+  const quando = linha.querySelector('.quando');
+  quando.textContent = formatarAtualizacao(a.atualizado_em);
+  if (a.desatualizada) {
+    const selo = document.createElement('span');
+    selo.className = 'selo';
+    selo.title = 'A API de cotações não respondeu. Este é o último valor guardado.';
+    selo.textContent = 'Desatualizada';
+    quando.append(' ', selo);
+  }
+  return linha;
+}
+
+async function carregarRadar() {
+  const listaB3 = document.getElementById('radar-b3');
+  if (!listaB3) return;   // não é a página do radar
+
+  // o PHP pode precisar consultar as APIs: leva alguns segundos
+  const resposta = await fetch(API + 'radar.php');
+  const radar = await resposta.json();
+  document.getElementById('carregando-radar').hidden = true;
+  if (!resposta.ok) {
+    return notificar({ titulo: 'Não foi possível carregar o radar', descricao: radar.erro, status: 'erro' });
+  }
+
+  listaB3.replaceChildren(...radar.B3.map(criarLinhaRadar));
+  document.getElementById('radar-us').replaceChildren(...radar.US.map(criarLinhaRadar));
+  filtrarRadar();   // se a pessoa já digitou algo na busca enquanto carregava
+
+  // um aviso só, se alguma cotação não pôde ser atualizada
+  const todas = radar.B3.concat(radar.US);
+  if (todas.some(a => a.desatualizada || a.preco === null)) {
+    notificar({ titulo: 'Algumas cotações não foram atualizadas', descricao: 'A API de cotações não respondeu agora. Mostramos o último valor guardado.', status: 'info' });
+  }
+}
+
+// busca do radar: esconde as linhas cujo código não tem o texto digitado (só no navegador)
+function filtrarRadar() {
+  const busca = document.getElementById('busca-radar');
+  if (!busca) return;
+  const texto = busca.value.trim().toUpperCase();
+
+  let achou = 0;
+  ['b3', 'us'].forEach(mercado => {
+    let achouNoMercado = 0;
+    document.querySelectorAll('#radar-' + mercado + ' .radar-linha').forEach(linha => {
+      linha.hidden = !linha.dataset.ticker.includes(texto);
+      if (!linha.hidden) achouNoMercado++;
+    });
+    // mercado sem nenhuma ação encontrada: esconde o bloco inteiro (título e cabeçalho)
+    document.getElementById('bloco-' + mercado).hidden = achouNoMercado === 0;
+    achou += achouNoMercado;
+  });
+
+  // nenhuma ação nos dois mercados: mostra a mensagem
+  const semResultado = document.getElementById('radar-sem-resultado');
+  semResultado.hidden = achou > 0;
+  semResultado.textContent = 'Nenhuma ação encontrada para "' + busca.value.trim() + '".';
+}
+document.getElementById('busca-radar')?.addEventListener('input', filtrarRadar);
+
+// ---------- carteira ----------
+let carteira = [];   // posições que estão na tela: usadas ao editar e para somar os totais
+
+function criarLinhaCarteira(p) {
+  const linha = document.createElement('div');
+  linha.className = 'carteira-linha';
+  linha.dataset.id = p.id;
+  // data-rotulo: no celular o cabeçalho some e cada valor mostra o próprio nome (ver style.css)
+  linha.innerHTML =
+    '<span class="nome"><span class="ticker"></span> <span class="cat"></span></span>' +
+    '<span class="num" data-rotulo="Quantidade"></span><span class="num" data-rotulo="Preço médio"></span>' +
+    '<span class="num" data-rotulo="Preço atual"></span><span class="num" data-rotulo="Valor atual"></span>' +
+    '<span class="num resultado" data-rotulo="Resultado"></span>' +
+    '<span class="acoes"><button class="btn-texto" data-editar-posicao>Editar</button><button class="btn-texto perigo" data-excluir-posicao>Excluir</button></span>';
+  linha.querySelector('.ticker').textContent = p.ticker;
+  linha.querySelector('.cat').textContent = p.mercado === 'B3' ? 'B3' : 'EUA';
+
+  const celulas = linha.querySelectorAll('[data-rotulo]');
+  celulas[0].textContent = NUMERO_INTEIRO.format(p.quantidade);
+  celulas[1].textContent = formatarDinheiro(p.preco_medio, p.mercado);
+
+  // sem cotação: não dá para calcular o valor atual nem o resultado
+  if (p.preco === null) {
+    celulas[2].textContent = 'Sem cotação';
+    celulas[3].textContent = '—';
+    celulas[4].textContent = '—';
+    return linha;
+  }
+
+  // valor atual = quantidade × preço de hoje; investido = quantidade × preço médio pago
+  const valorAtual = p.quantidade * p.preco;
+  const investido = p.quantidade * p.preco_medio;
+  const ganho = valorAtual - investido;
+  const ganhoPorcento = ganho / investido * 100;
+
+  celulas[2].textContent = formatarDinheiro(p.preco, p.mercado);
+  celulas[3].textContent = formatarDinheiro(valorAtual, p.mercado);
+  mostrarAltaBaixa(celulas[4], ganho, formatarDinheiro(Math.abs(ganho), p.mercado) + ' (' + formatarPorcento(ganhoPorcento) + ')');
+  return linha;
+}
+
+// totais de cada moeda. R$ e US$ ficam em caixas separadas: nunca são somados.
+function mostrarTotaisCarteira() {
+  ['B3', 'US'].forEach(mercado => {
+    const caixa = document.getElementById(mercado === 'B3' ? 'totais-b3' : 'totais-us');
+    const posicoes = carteira.filter(p => p.mercado === mercado);
+    caixa.hidden = posicoes.length === 0;   // sem ações desse mercado: esconde a caixa
+    if (posicoes.length === 0) return;
+
+    let investido = 0, valorAtual = 0, faltaCotacao = false;
+    posicoes.forEach(p => {
+      investido += p.quantidade * p.preco_medio;
+      if (p.preco === null) faltaCotacao = true;
+      else valorAtual += p.quantidade * p.preco;
+    });
+    caixa.querySelector('.investido').textContent = formatarDinheiro(investido, mercado);
+
+    // se alguma ação está sem cotação, o total ficaria errado: mostra "—"
+    const elAtual = caixa.querySelector('.atual');
+    const elResultado = caixa.querySelector('.resultado');
+    if (faltaCotacao) {
+      elAtual.textContent = '—';
+      elResultado.classList.remove('alta', 'baixa');
+      elResultado.textContent = '—';
+      return;
+    }
+    const ganho = valorAtual - investido;
+    elAtual.textContent = formatarDinheiro(valorAtual, mercado);
+    mostrarAltaBaixa(elResultado, ganho, formatarDinheiro(Math.abs(ganho), mercado) + ' (' + formatarPorcento(ganho / investido * 100) + ')');
+  });
+
+  // carteira vazia: esconde a lista e mostra a mensagem
+  document.getElementById('lista-carteira').hidden = carteira.length === 0;
+  document.getElementById('sem-carteira').hidden = carteira.length > 0;
+}
+
+async function carregarCarteira() {
+  const lista = document.getElementById('lista-carteira');
+  if (!lista) return;   // não é a página do radar
+
+  const resposta = await fetch(API + 'carteira.php');
+  const posicoes = await resposta.json();
+  if (!resposta.ok) {
+    return notificar({ titulo: 'Não foi possível carregar a carteira', descricao: posicoes.erro, status: 'erro' });
+  }
+
+  // o PHP manda os números como texto ("38.50"): converte uma vez aqui para fazer as contas
+  carteira = posicoes.map(p => ({
+    ...p,
+    quantidade: Number(p.quantidade),
+    preco_medio: Number(p.preco_medio),
+    preco: p.preco === null ? null : Number(p.preco),
+  }));
+
+  lista.replaceChildren(...carteira.map(criarLinhaCarteira));
+  mostrarTotaisCarteira();
+}
+ligarContador('qtd-carteira', 'lista-carteira', String);
+
+// cada página carrega só o que é dela (as duas funções não fazem nada na página errada)
+carregarRadar();
+carregarCarteira().then(abrirCarteiraPelaUrl);
+
+// carteira.php?ticker=PETR4&mercado=B3 (vindo do botão do radar): já abre o modal com a ação.
+// Se a pessoa já tem essa ação, abre o Editar dela (em vez de dar o erro "você já tem").
+function abrirCarteiraPelaUrl() {
+  if (!formCarteira) return;   // não é a página da carteira
+  const parametros = new URLSearchParams(location.search);
+  const ticker = (parametros.get('ticker') || '').trim().toUpperCase();
+  const mercado = parametros.get('mercado');
+  if (!ticker || (mercado !== 'B3' && mercado !== 'US')) return;   // sem parâmetros: só mostra a carteira
+
+  // tira os parâmetros do endereço: recarregar a página não abre o modal de novo
+  history.replaceState(null, '', location.pathname);
+
+  const jaTem = carteira.find(p => p.ticker === ticker);   // a tabela só deixa um ticker por usuário
+  abrirCarteira(jaTem || { ticker, mercado });
+}
+
+// ---------- modal da carteira ----------
+const modalCarteira = document.getElementById('modal-carteira');
+const formCarteira = document.getElementById('form-carteira');
+
+// abre o modal. dados pode ser:
+//   {}                  -> botão "Adicionar à carteira" da seção (tudo em branco)
+//   { ticker, mercado } -> botão de uma linha do radar (ação e mercado já preenchidos)
+//   uma posição inteira -> botão Editar (com id: só muda quantidade e preço médio)
+function abrirCarteira(dados = {}) {
+  formCarteira.reset();
+  mostrarMsg(document.getElementById('msg-carteira'), '');
+
+  formCarteira.querySelector('[name="id"]').value = dados.id || '';
+  formCarteira.ticker.value = dados.ticker || '';
+  formCarteira.mercado.value = dados.mercado || 'B3';
+  formCarteira.quantidade.value = dados.quantidade || '';
+  formCarteira.preco_medio.value = dados.preco_medio || '';
+
+  // ação já escolhida (radar ou edição): trava a ação e o mercado
+  const acaoEscolhida = Boolean(dados.ticker);
+  formCarteira.ticker.readOnly = acaoEscolhida;
+  formCarteira.mercado.disabled = acaoEscolhida;
+
+  document.getElementById('titulo-modal-carteira').textContent = dados.id ? 'Editar ' + dados.ticker : 'Adicionar à carteira';
+  modalCarteira.showModal();
+  (acaoEscolhida ? formCarteira.quantidade : formCarteira.ticker).focus();
+}
+
+document.getElementById('btn-nova-posicao')?.addEventListener('click', () => abrirCarteira());
+
+// enviar o modal: POST (novo) ou PUT (editar) para api/carteira.php
+formCarteira?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = document.getElementById('msg-carteira');
+  // lê campo por campo (o select travado não entraria num FormData)
+  const dados = {
+    id: formCarteira.querySelector('[name="id"]').value,
+    ticker: formCarteira.ticker.value.trim().toUpperCase(),
+    mercado: formCarteira.mercado.value,
+    quantidade: formCarteira.quantidade.value,
+    preco_medio: formCarteira.preco_medio.value,
+  };
+
+  if (!dados.ticker) return mostrarMsg(msg, 'Informe o código da ação.');
+  const quantidade = Number(dados.quantidade);
+  if (!Number.isInteger(quantidade) || quantidade <= 0) return mostrarMsg(msg, 'Informe a quantidade: um número inteiro maior que zero.');
+  if (!(Number(dados.preco_medio) > 0)) return mostrarMsg(msg, 'Informe o preço médio pago (um valor maior que zero).');
+
+  // ação nova: o PHP pode precisar conferir na API se ela existe. Trava o botão enquanto espera.
+  const botao = formCarteira.querySelector('[type="submit"]');
+  botao.disabled = true;
+  botao.textContent = 'Salvando...';
+  const resposta = await fetch(API + 'carteira.php', {
+    method: dados.id ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dados),
+  });
+  const resultado = await resposta.json();
+  botao.disabled = false;
+  botao.textContent = 'Salvar';
+
+  if (!resposta.ok) return mostrarMsg(msg, resultado.erro);   // erro: o modal continua aberto
+  modalCarteira.close();
+  carregarCarteira();
+  notificar({ titulo: dados.id ? 'Posição atualizada' : 'Ação adicionada à carteira', descricao: dados.ticker });
+});
+
+// botões Editar e Excluir de cada linha da carteira
+document.getElementById('lista-carteira')?.addEventListener('click', async e => {
+  const linha = e.target.closest('[data-id]');
+  if (!linha) return;
+  const posicao = carteira.find(p => p.id == linha.dataset.id);
+
+  if (e.target.matches('[data-editar-posicao]')) {
+    abrirCarteira(posicao);
+  }
+
+  if (e.target.matches('[data-excluir-posicao]')) {
+    const ok = await confirmar({
+      titulo: 'Excluir ' + posicao.ticker + ' da carteira?',
+      texto: 'A quantidade e o preço médio dessa ação serão apagados. Essa ação não pode ser desfeita.',
+      acao: 'Excluir',
+    });
+    if (!ok) return;
+
+    const resposta = await fetch(API + 'carteira.php?id=' + posicao.id, { method: 'DELETE' });
+    if (!resposta.ok) {
+      const resultado = await resposta.json();
+      return notificar({ titulo: 'Não foi possível excluir', descricao: resultado.erro, status: 'erro' });
+    }
+    // tira da lista e refaz os totais
+    carteira = carteira.filter(p => p.id != posicao.id);
+    linha.remove();
+    mostrarTotaisCarteira();
+    document.getElementById('btn-nova-posicao').focus();
+    notificar({ titulo: 'Ação excluída da carteira', descricao: posicao.ticker });
+  }
+});
 
 // começa tudo: escreve o mês na tela e carrega os dados dele
 atualizarMes();
